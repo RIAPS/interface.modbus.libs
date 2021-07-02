@@ -1,3 +1,5 @@
+#code to color terminal text color
+
 grey = "\x1b[38;21m"
 yellow = "\x1b[33;21m"
 red = "\x1b[31;21m"
