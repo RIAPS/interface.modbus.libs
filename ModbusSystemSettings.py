@@ -13,4 +13,5 @@ class ModbusSystem:
         PollTimerOverrun = -4
     class Debugging:
         Verbose = True      # modbus communication informational message level
+        Diagnostics = False
            
