@@ -14,4 +14,6 @@ class ModbusSystem:
     class Debugging:
         Verbose = True      # modbus communication informational message level
         Diagnostics = False
+        DebugLevel = 0
+        
            
