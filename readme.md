@@ -3,3 +3,4 @@
 
 
 <img src="submodule.png" align="center" width="600">
+<img src="submodule_dialog.png" align="center" width="600">
