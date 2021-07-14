@@ -3,12 +3,12 @@
 
 ##### Using TortoiseGit the submodule can be added to any project as shown below
 
-<img src="submodule.png" align="center" width="800">
+<img src="Images/submodule.png" align="center" width="800">
 
 
 #### Add submodule dialog
 
-<img src="submodule_dialog.png" align="center" width="800">
+<img src="Images/submodule_dialog.png" align="center" width="800">
 
 
 ##### The git command for adding this submodule is:
