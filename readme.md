@@ -1,5 +1,8 @@
 ## Modbus message handling library
+
 ## This project uses the modbus-tk module for low level Modbus packet transmission.
+
+### For information how to use this library in RAIPS see: interface.modbus.apps
 
 ##### Using TortoiseGit the submodule can be added to any project as shown below
 
