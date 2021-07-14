@@ -1,4 +1,4 @@
-## Modbus message handling libray
+## Modbus message handling library
 ## This project uses the modbus-tk module for low level Modbus packet transmission.
 
 ##### Using TortoiseGit the submodule can be added to any project as shown below
