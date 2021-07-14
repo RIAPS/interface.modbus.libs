@@ -411,26 +411,33 @@ class ModbusDevice(Component):
 
                     self.event_port.send(modbus_evt.to_bytes())
                     break
-
+        else: # nothing to poll
+            pass
+            
     # riaps:keep_poller:end
 
     # riaps:keep_impl:begin
     def handleActivate(self):
-        if self.poller != None:
-            cur_period = self.poller.getPeriod() * 1000
-            self.poller.setPeriod(self.interval / 1000.0)
-            new_period = self.poller.getPeriod() * 1000
-            self.logger.info(f"Modbus Poller Interval changed from {cur_period} msec to {new_period} msec")
-            if 'RS232' in self.dvc:
-                comm_time_out = ModbusSystem.Timeouts.TTYSComm
-                self.logger.info(f"Modbus RTU device comm timeout is {comm_time_out} msec")
-            else:
-                comm_time_out = ModbusSystem.Timeouts.TCPComm
-                self.logger.info( f"Modbus TCP device comm timeout is {comm_time_out} msec" )  
-            
-            if new_period < comm_time_out :
-                self.logger.info( f"Modbus Poller Interval is less than communication timeout of {comm_time_out} msec. " )  
-                self.disable_polling()
+        if not self.dvc["poll"]:
+            if self.poller != None:
+                self.poller.halt()
+                self.logger.info("No parameters configured for polling. Modbus poller timer has been stopped!")
+        else:    
+            if self.poller != None:
+                cur_period = self.poller.getPeriod() * 1000
+                self.poller.setPeriod(self.interval / 1000.0)
+                new_period = self.poller.getPeriod() * 1000
+                self.logger.info(f"Modbus Poller Interval changed from {cur_period} msec to {new_period} msec")
+                if 'RS232' in self.dvc:
+                    comm_time_out = ModbusSystem.Timeouts.TTYSComm
+                    self.logger.info(f"Modbus RTU device comm timeout is {comm_time_out} msec")
+                else:
+                    comm_time_out = ModbusSystem.Timeouts.TCPComm
+                    self.logger.info( f"Modbus TCP device comm timeout is {comm_time_out} msec" )  
+                
+                if new_period < comm_time_out :
+                    self.logger.info( f"Modbus Poller Interval is less than communication timeout of {comm_time_out} msec. " )  
+                    self.disable_polling()
 
    # Should be called before __destroy__ when app is shutting down.  
    # this does not appear to work correctly       
