@@ -68,13 +68,22 @@ class ModbusDevice(Component):
                 # Start Modbus master
                 # if Serial is defined in config file then use serial communication
                 if 'RS232' in self.dvc :
+                    comname = 'RS232'
+                elif 'Serial' in self.dvc :
+                    comname = 'Serial'
+                elif 'TCP' in self.dvc :
+                    comname = 'TCP'
+                else:
+                    comname = ""
+
+                if comname == 'RS232' or comname == 'Serial' :
                     try:
-                        self.master = modbus_rtu.RtuMaster(serial.Serial(port=self.dvc['RS232']['device'],
-                                                                        baudrate=self.dvc['RS232']['baudrate'],
-                                                                        bytesize=self.dvc['RS232']['bytesize'],
-                                                                        parity=self.dvc['RS232']['parity'],
-                                                                        stopbits=self.dvc['RS232']['stopbits'],
-                                                                        xonxoff=self.dvc['RS232']['xonxoff']))
+                        self.master = modbus_rtu.RtuMaster(serial.Serial(port=self.dvc[comname]['device'],
+                                                                        baudrate=self.dvc[comname]['baudrate'],
+                                                                        bytesize=self.dvc[comname]['bytesize'],
+                                                                        parity=self.dvc[comname]['parity'],
+                                                                        stopbits=self.dvc[comname]['stopbits'],
+                                                                        xonxoff=self.dvc[comname]['xonxoff']))
 
                         self.master.set_timeout(ModbusSystem.Timeouts.TTYSComm)
                         self.master.set_verbose(ModbusSystem.Debugging.Verbose)
@@ -83,9 +92,9 @@ class ModbusDevice(Component):
                         self.logger.info('Modbus RTU Creation Exception: {0}'.format(ex))
                         self.master = None
 
-                elif 'TCP' in self.dvc:
-                    addr = self.dvc['TCP']['Address']
-                    port = self.dvc['TCP']['Port']
+                elif comname == 'TCP':
+                    addr = self.dvc[comname]['Address']
+                    port = self.dvc[comname]['Port']
 
                     try:
                         self.master = modbus_tcp.TcpMaster(addr, port)
