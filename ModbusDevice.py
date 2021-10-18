@@ -437,7 +437,7 @@ class ModbusDevice(Component):
                 self.poller.setPeriod(self.interval / 1000.0)
                 new_period = self.poller.getPeriod() * 1000
                 self.logger.info(f"Modbus Poller Interval changed from {cur_period} msec to {new_period} msec")
-                if 'RS232' in self.dvc:
+                if 'RS232' in self.dvc or 'Serial' in self.dvc:
                     comm_time_out = ModbusSystem.Timeouts.TTYSComm
                     self.logger.info(f"Modbus RTU device comm timeout is {comm_time_out} msec")
                 else:
