@@ -213,8 +213,7 @@ class ModbusDevice(Component):
             except Exception as ex:
                 modbus_evt = device_capnp.DeviceEvent.new_message()
                 modbus_evt.event = f"Modbus({msg.device}) Exception on_device_port()->{ex}"
-                modbus_evt_bytes = modbus_evt.to_bytes()
-                self.event_port.send(modbus_evt_bytes)
+                self.postEvent(modbus_evt)
 
                 # Construct message to send back to controller
                 # The parameters are defined in modbusexample.capnp
