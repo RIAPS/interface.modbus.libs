@@ -397,7 +397,8 @@ class ModbusDevice(Component):
 
                     # Publish status message on pub port if outside of limits or no limits
                     if post_event:
-                        self.event_port.send(modbus_evt.to_bytes())
+                        self.postEvent( modbus_evt )
+                    #check if timer overrun is occuring    
                     if et.total_seconds() > self.interval / 1000:
                         time_over_run = True
                 else:
@@ -418,7 +419,7 @@ class ModbusDevice(Component):
                                    [self.interval, "msec"],
                                    ModbusSystem.Errors.PollTimerOverrun)
 
-                    self.event_port.send(modbus_evt.to_bytes())
+                    self.postEvent( modbus_evt )
                     break
         else: # nothing to poll
             pass
@@ -427,26 +428,47 @@ class ModbusDevice(Component):
 
     # riaps:keep_impl:begin
     def handleActivate(self):
-        if not self.dvc["poll"]:
-            if self.poller != None:
-                self.poller.halt()
-                self.logger.info("No parameters configured for polling. Modbus poller timer has been stopped!")
-        else:    
+        try:
+            self.poller
+            self.logger.info(f"Modbus [self.poller] is defined.")
             if self.poller != None:
                 cur_period = self.poller.getPeriod() * 1000
                 self.poller.setPeriod(self.interval / 1000.0)
                 new_period = self.poller.getPeriod() * 1000
                 self.logger.info(f"Modbus Poller Interval changed from {cur_period} msec to {new_period} msec")
-                if 'RS232' in self.dvc or 'Serial' in self.dvc:
-                    comm_time_out = ModbusSystem.Timeouts.TTYSComm
-                    self.logger.info(f"Modbus RTU device comm timeout is {comm_time_out} msec")
-                else:
-                    comm_time_out = ModbusSystem.Timeouts.TCPComm
-                    self.logger.info( f"Modbus TCP device comm timeout is {comm_time_out} msec" )  
-                
-                if new_period < comm_time_out :
-                    self.logger.info( f"Modbus Poller Interval is less than communication timeout of {comm_time_out} msec. " )  
-                    self.disable_polling()
+                    
+                if not self.dvc["poll"]:
+                    self.poller.halt()
+                    self.logger.info("No parameters configured for polling. Modbus poller timer has been stopped!")
+            else:
+                new_period = self.interval                           
+        except AttributeError:
+            new_period = self.interval                           
+            self.logger.info( f"Modbus attribute [self.poller] is not defined!" )  
+
+        if 'RS232' in self.dvc or 'Serial' in self.dvc:
+            comm_time_out = ModbusSystem.Timeouts.TTYSComm
+            self.logger.info(f"Modbus RTU device comm timeout is {comm_time_out} msec")
+        else:
+            comm_time_out = ModbusSystem.Timeouts.TCPComm
+            self.logger.info( f"Modbus TCP device comm timeout is {comm_time_out} msec" )  
+        
+        if new_period < comm_time_out :
+            self.logger.info( f"Modbus Poller Interval is less than communication timeout of {comm_time_out} msec. " )  
+            self.disable_polling()
+        
+        # ppost a startup event showing the device is active 
+        evt = device_capnp.DeviceEvent.new_message()
+        evt.event = "ACTIVE"
+        evt.command = "STARTUP"
+        evt.values = [ 0.0 ]      
+        evt.names = [ "" ]
+        evt.units = [ "" ]
+        evt.device = self.device_name
+        evt.error = 0
+        evt.et = 0.0
+        self.postEvent( evt )
+
 
    # Should be called before __destroy__ when app is shutting down.  
    # this does not appear to work correctly       
@@ -478,6 +500,17 @@ class ModbusDevice(Component):
             self.poller.terminate() 
 
         self.logger.info("__destroy__ complete for - %s" % self.device_name)    
+
+    #post an event if the required attributes exist and the event is valid
+    def postEvent(self, evt):
+        try:
+            if evt != None :
+                self.event_port.send( evt.to_bytes() )
+            else:
+                self.logger.info( f"Invalid event: {evt}!" )                
+        except AttributeError:
+            self.logger.info( f"Modbus attribute [self.event_port] is not defined! Cannot process event{evt}! " )  
+
  
     # Do not allow the polling loop to send messages to the modbus device
     def disable_polling(self):
