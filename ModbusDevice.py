@@ -241,13 +241,13 @@ class ModbusDevice(Component):
 
     # riaps:keep_device_port:end
 
-    # riaps:keep_poller:begin
-    def on_poller(self):
+    # riaps:keep_modbus_poller:begin
+    def on_modbus_poller(self):
         """Poll all variable names specified in yaml file"""
 
-        now = self.poller.recv_pyobj()
+        now = self.modbus_poller.recv_pyobj()
         if self.dvc["debugMode"]:
-            self.logger.info(f"on_poller now: {now}")
+            self.logger.info(f"on_modbus_poller now: {now}")
         comm_error = False
         time_over_run = False
 
@@ -423,27 +423,27 @@ class ModbusDevice(Component):
         else: # nothing to poll
             pass
             
-    # riaps:keep_poller:end
+    # riaps:keep_modbus_poller:end
 
     # riaps:keep_impl:begin
     def handleActivate(self):
         try:
-            self.poller
-            self.logger.info(f"Modbus [self.poller] is defined.")
-            if self.poller != None:
-                cur_period = self.poller.getPeriod() * 1000
-                self.poller.setPeriod(self.interval / 1000.0)
-                new_period = self.poller.getPeriod() * 1000
-                self.logger.info(f"Modbus Poller Interval changed from {cur_period} msec to {new_period} msec")
+            self.modbus_poller
+            self.logger.info(f"Modbus [self.modbus_poller] is defined.")
+            if self.modbus_poller != None:
+                cur_period = self.modbus_poller.getPeriod() * 1000
+                self.modbus_poller.setPeriod(self.interval / 1000.0)
+                new_period = self.modbus_poller.getPeriod() * 1000
+                self.logger.info(f"Modbus modbus_poller Interval changed from {cur_period} msec to {new_period} msec")
                     
                 if not self.dvc["poll"]:
-                    self.poller.halt()
-                    self.logger.info("No parameters configured for polling. Modbus poller timer has been stopped!")
+                    self.modbus_poller.halt()
+                    self.logger.info("No parameters configured for polling. Modbus modbus_poller timer has been stopped!")
             else:
                 new_period = self.interval                           
         except AttributeError:
             new_period = self.interval                           
-            self.logger.info( f"Modbus attribute [self.poller] is not defined!" )  
+            self.logger.info( f"Modbus attribute [self.modbus_poller] is not defined!" )  
 
         if 'RS232' in self.dvc or 'Serial' in self.dvc:
             comm_time_out = ModbusSystem.Timeouts.TTYSComm
@@ -453,7 +453,7 @@ class ModbusDevice(Component):
             self.logger.info( f"Modbus TCP device comm timeout is {comm_time_out} msec" )  
         
         if new_period < comm_time_out :
-            self.logger.info( f"Modbus Poller Interval is less than communication timeout of {comm_time_out} msec. " )  
+            self.logger.info( f"Modbus modbus_poller Interval is less than communication timeout of {comm_time_out} msec. " )  
             self.disable_polling()
         
         # ppost a startup event showing the device is active 
@@ -490,13 +490,13 @@ class ModbusDevice(Component):
 
     # Clean up and shutdown 
     def __destroy__(self):
-        if self.poller.running() == True :
+        if self.modbus_poller.running() == True :
             self.disable_polling()
             
             if self.master != None :
                 self.master.close()
             
-            self.poller.terminate() 
+            self.modbus_poller.terminate() 
 
         self.logger.info("__destroy__ complete for - %s" % self.device_name)    
 
