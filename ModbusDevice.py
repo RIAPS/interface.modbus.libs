@@ -120,6 +120,7 @@ class ModbusDevice(Component):
     # riaps:keep_device_port:begin
     def on_device_port(self):
         # receive
+        self.logger.warn( f"ModbusDevice:on_device_port()" )
         start = datetime.datetime.now()  # measure how long it takes to complete query
         msg_bytes = self.device_port.recv()  # required to remove message from queue
         msg = device_capnp.DeviceQry.from_bytes(msg_bytes)
@@ -138,7 +139,7 @@ class ModbusDevice(Component):
             function_code = modbus_func['function']
             starting_address = modbus_func['start']
             length = modbus_func['length']
-            value = msg.value[idx]  # value is specified in the request message
+            value = msg.values[idx]  # value is specified in the request message
             # scale value per yaml file and convert to int to send to Modbus slave
 
             if 'data_format' in list(modbus_func.keys()):
@@ -219,15 +220,17 @@ class ModbusDevice(Component):
                 # The parameters are defined in modbusexample.capnp
 
         ans_msg = device_capnp.DeviceAns.new_message()
-        ans_msg.reply = msg.operation
+        ans_msg.reply = "Success"
+        ans_msg.device = msg.device
+        ans_msg.param = list(msg.param)
+        ans_msg.operation = msg.operation
         ans_msg.values = values
-        ans_msg.delay = time.time() - msg.timestamp
+        elapsed_time = datetime.datetime.now() - start
+        ans_msg.et = elapsed_time.total_seconds()
         ans_msg_bytes = ans_msg.to_bytes()
-
         # Send message to controller
         self.device_port.send(ans_msg_bytes)
 
-        elapsed_time = datetime.datetime.now() - start
 
         # log Modbus call
         if self.dvc["debugMode"]:
