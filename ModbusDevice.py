@@ -3,6 +3,7 @@ import time
 
 from riaps.run.comp import Component
 from libs.ModbusSystemSettings import ModbusSystem
+from libs.ModbusSlaveThread import ModbusSlave
 import yaml
 from modbus_tk import modbus_tcp
 from modbus_tk import modbus_rtu
@@ -34,88 +35,63 @@ class ModbusDevice(Component):
 
         self.pid = os.getpid()
 
+        self.ModbusConfigError = False
+        self.modbus_device_cfgs = {}
+        self.modbus_device_keys = []
+        self.devices = {}
         try:
             if os.path.exists( config ) :
                 # Load config file to interact with Modbus device
-                with open(config, 'r') as cfg:
-                    self.cfg = yaml.safe_load(cfg)
+                with open(config, 'r') as cfglist:
+                    configs = yaml.safe_load( cfglist )
 
-                self.ModbusConfigError = False
-            else:
-                self.logger.info( 'Configuration file does not exist [{0}].'.format( config ) )
+                for c in configs["configs"]:
+                    cfgdev = None
+                    if os.path.exists( c ) :
+                        with open(c, 'r') as dvc:
+                            cfgdev = yaml.safe_load( dvc )
 
-        except OSError:
-            self.logger.info( 'File I/O error [{0}].'.format( config ) )
-
-        if not self.ModbusConfigError :
-            try : # handle dictionary key errors
+                        if cfgdev != None :
+                            devname = list(cfgdev.keys())
+                            self.modbus_device_cfgs[devname[0]] = cfgdev
+                    else:
+                        self.ModbusConfigError = True
+                        self.logger.info( f"Device config:{c} does not exist!" )
 
                 # Get the names of all the devices
-                self.modbus_devices = list(self.cfg.keys())
+                self.modbus_device_keys = list( self.modbus_device_cfgs.keys() )
 
-                # Get the first modbus device from the yaml file
-                self.dvc = self.cfg[self.modbus_devices[0]]
+            else:
+               self.ModbusConfigError = True
+               self.logger.info( 'System configuration file does not exist [{0}].'.format( config ) )
 
-                # set device_name, used in events sent to the controller to identify the device
-                self.device_name = str(self.modbus_devices[0])
+        except OSError:
+            self.ModbusConfigError = True
+            self.logger.info( 'File I/O error [{0}].'.format( config ) )
 
-                # set slave id. Argument required by modbus tk to send commands to Modbus
-                self.slave = self.dvc['Slave']
-
-                # set the polling interval
-                self.interval = self.dvc['Interval']
-
-                # Start Modbus master
-                # if Serial is defined in config file then use serial communication
-                if 'RS232' in self.dvc :
-                    comname = 'RS232'
-                elif 'Serial' in self.dvc :
-                    comname = 'Serial'
-                elif 'TCP' in self.dvc :
-                    comname = 'TCP'
-                else:
-                    comname = ""
-
-                if comname == 'RS232' or comname == 'Serial' :
-                    try:
-                        self.master = modbus_rtu.RtuMaster(serial.Serial(port=self.dvc[comname]['device'],
-                                                                        baudrate=self.dvc[comname]['baudrate'],
-                                                                        bytesize=self.dvc[comname]['bytesize'],
-                                                                        parity=self.dvc[comname]['parity'],
-                                                                        stopbits=self.dvc[comname]['stopbits'],
-                                                                        xonxoff=self.dvc[comname]['xonxoff']))
-
-                        self.master.set_timeout(ModbusSystem.Timeouts.TTYSComm)
-                        self.master.set_verbose(ModbusSystem.Debugging.Verbose)
-                        self.logger.info( 'Modbus RTU Connected to Slave [{0}] on Port [{1}]'.format( self.slave, self.device ) )
-                    except Exception as ex:
-                        self.logger.info('Modbus RTU Creation Exception: {0}'.format(ex))
-                        self.master = None
-
-                elif comname == 'TCP':
-                    addr = self.dvc[comname]['Address']
-                    port = self.dvc[comname]['Port']
-
-                    try:
-                        self.master = modbus_tcp.TcpMaster(addr, port)
-                        self.master.set_timeout(ModbusSystem.Timeouts.TCPComm)
-                        self.master.set_verbose(ModbusSystem.Debugging.Verbose)
-                        self.logger.info( 'Modbus TCP Connected to Slave [{0}] on Address [{1}:{2}]'.format( self.slave, addr, port ) )
-                    except Exception as ex:
-                        self.logger.info(f"Modbus TCP Creation Exception: {ex}")
-                        self.master = None
-                else :
-                    self.logger.info(f"Modbus device has no communication configuration defined.")
-                    self.master = None
-                    
-            except KeyError as kex:
-                self.logger.info(f"Modbus configuration is missing required setting: {kex}")    
-                self.ModbusConfigError = True
-
-        else:
-            pass # Device cannot operate due to configuration error
+        if self.ModbusConfigError :
+            self.logger.info( f"{len( self.modbus_device_keys )} Modbus device configuration error!")
+        else:    
+            self.logger.info( f"{len( self.modbus_device_keys )} Modbus devices found in configuration:")
+            for k in self.modbus_device_keys :
+                self.logger.info( f"{k}")
 
     # riaps:keep_constr:end
+
+# riaps:keep_modbus_cmd_port:begin
+    def on_modbus_cmd_port(self):
+        msg = self.modbus_cmd_port.recv_pyobj()
+        ansmsg = device_capnp.DeviceAns.new_message()
+        ansmsg.error = msg.error
+        ansmsg.device = msg.device
+        ansmsg.operation = msg.operation
+        ansmsg.params = list(msg.params)
+        ansmsg.values = list(msg.values)
+        ansmsg.msgcounter = msg.msgcounter    
+        msgbytes =  ansmsg.to_bytes()
+        self.device_port.send( msgbytes )
+# riaps:keep_modbus_cmd_port:end
+
 
     # riaps:keep_device_port:begin
     def on_device_port(self):
@@ -125,124 +101,17 @@ class ModbusDevice(Component):
         msg_bytes = self.device_port.recv()  # required to remove message from queue
         msg = device_capnp.DeviceQry.from_bytes(msg_bytes)
 
-        values = []
-        modbus_duration = {}
-        for idx, param in enumerate(msg.param):
-
-            # construct yaml file command
-            param_op = f"{param}_{msg.operation}"
-
-            # fetch yaml file command
-            modbus_func = self.cfg[msg.device][param_op]
-
-            # read Modbus command parameters from yaml file
-            function_code = modbus_func['function']
-            starting_address = modbus_func['start']
-            length = modbus_func['length']
-            value = msg.values[idx]  # value is specified in the request message
-            # scale value per yaml file and convert to int to send to Modbus slave
-
-            if 'data_format' in list(modbus_func.keys()):
-                data_fmt = modbus_func['data_format']
-            else:
-                data_fmt = ''
-
-            if 'bit_position' in list(modbus_func.keys()):
-                bit_pos = modbus_func['bit_position']
-                modbus_value = int(value)
-            else:
-                bit_pos = -1
-                if data_fmt == '':
-                    modbus_value = [int(value / modbus_func['Units'][0])]
-                else:
-                    modbus_value = value
-
-            try:
-                # if this is a bit write operation read the current value
-                # then mask in the correct new value
-                # finally write the modified value back to the modbus device
-                if bit_pos != -1 and "WRITE" in function_code:
-                    temp_code = cst.READ_HOLDING_REGISTERS
-                    # TODO: measure time of this in OPAL
-                    modbus_start = datetime.datetime.now()
-                    temp_response = self.master.execute(self.slave,
-                                                        temp_code,
-                                                        starting_address,
-                                                        quantity_of_x=length,
-                                                        output_value=modbus_value,
-                                                        data_format=data_fmt)
-                    modbus_duration[f"{param}_READ"] = (datetime.datetime.now() - modbus_start).total_seconds()
-                    # FIRST READ REGISTER
-
-                    if modbus_value == 0:
-                        modbus_value = self.clr_bit(temp_response[0], bit_pos)
-                    else:
-                        modbus_value = self.set_bit(temp_response[0], bit_pos)
-                    # THEN MASK IN CORRECT VALUE
-                    # TODO: Better way to mask?
-
-                modbus_start = datetime.datetime.now()  # measure how long it takes to query modbus
-                response = self.master.execute(self.slave,
-                                               getattr(cst, function_code),
-                                               starting_address,
-                                               quantity_of_x=length,
-                                               output_value=modbus_value,
-                                               data_format=data_fmt)
-                modbus_duration[param] = (datetime.datetime.now() - modbus_start).total_seconds()
-                # modbus_duration.append((datetime.datetime.now() - modbus_start).total_seconds())  # measure how long it takes to query modbus
-                # EXECUTE REQUESTED FUNCTION
-
-                if bit_pos != -1:
-                    if str(bin(response[0])[2:][bit_pos]) == "1":
-                        value = 1
-                    else:
-                        value = 0
-                else:
-                    if self.dvc["debugMode"]:
-                        self.logger.info(f"\n{helper.Yellow}"
-                                         f"Param_op: {param_op}"
-                                         f"\nCommand: {function_code}"
-                                         f"\nSector: {getattr(cst, function_code)}"
-                                         f"\nResponse from modbus: "
-                                         f"\n{response}{helper.RESET}")
-                    if msg.operation == "WRITE":
-                        value = response[1]
-                    else:
-                        value = response[0] * modbus_func['Units'][0]
-                values.append(value)
-
-            except Exception as ex:
-                modbus_evt = device_capnp.DeviceEvent.new_message()
-                modbus_evt.event = f"Modbus({msg.device}) Exception on_device_port()->{ex}"
-                self.postEvent(modbus_evt)
-
-                # Construct message to send back to controller
-                # The parameters are defined in modbusexample.capnp
-
-        ans_msg = device_capnp.DeviceAns.new_message()
-        ans_msg.reply = "Success"
-        ans_msg.device = msg.device
-        ans_msg.param = list(msg.param)
-        ans_msg.operation = msg.operation
-        ans_msg.values = values
-        elapsed_time = datetime.datetime.now() - start
-        ans_msg.et = elapsed_time.total_seconds()
-        ans_msg_bytes = ans_msg.to_bytes()
-        # Send message to controller
-        self.device_port.send(ans_msg_bytes)
-
-
-        # log Modbus call
-        if self.dvc["debugMode"]:
-            self.logger.info(f"{helper.Cyan}\n\n"
-                             f"\nMessage from Control: \n {msg}"
-                             f"\nMessage time: {msg.timestamp}"  # time when ComputationalComponent sent message to modbus device
-                             f"\nCurrent time: {time.time()}"
-                             f"\n modbus_response: {values}"
-                             f"\nelapsed_time: {elapsed_time}"
-                             f"\nmodbus query time: {modbus_duration}\n{helper.RESET}")
+        dthd =  self.devices[ msg.device ]
+        plug_identity = self.modbus_cmd_port.get_plug_identity( dthd.get_plug() )
+        self.modbus_cmd_port.set_identity( plug_identity )
+        self.modbus_cmd_port.send_pyobj( msg )
 
     # riaps:keep_device_port:end
+
+    # riaps:keep_poller:begin
+    def on_poller(self):
+        pass
+    # riaps:keep_poller:end
 
     # riaps:keep_modbus_poller:begin
     def on_modbus_poller(self):
@@ -430,34 +299,14 @@ class ModbusDevice(Component):
 
     # riaps:keep_impl:begin
     def handleActivate(self):
-        try:
-            self.modbus_poller
-            self.logger.info(f"Modbus [self.modbus_poller] is defined.")
-            if self.modbus_poller != None:
-                cur_period = self.modbus_poller.getPeriod() * 1000
-                self.modbus_poller.setPeriod(self.interval / 1000.0)
-                new_period = self.modbus_poller.getPeriod() * 1000
-                self.logger.info(f"Modbus modbus_poller Interval changed from {cur_period} msec to {new_period} msec")
-                    
-                if not self.dvc["poll"]:
-                    self.modbus_poller.halt()
-                    self.logger.info("No parameters configured for polling. Modbus modbus_poller timer has been stopped!")
-            else:
-                new_period = self.interval                           
-        except AttributeError:
-            new_period = self.interval                           
-            self.logger.info( f"Modbus attribute [self.modbus_poller] is not defined!" )  
-
-        if 'RS232' in self.dvc or 'Serial' in self.dvc:
-            comm_time_out = ModbusSystem.Timeouts.TTYSComm
-            self.logger.info(f"Modbus RTU device comm timeout is {comm_time_out} msec")
-        else:
-            comm_time_out = ModbusSystem.Timeouts.TCPComm
-            self.logger.info( f"Modbus TCP device comm timeout is {comm_time_out} msec" )  
-        
-        if new_period < comm_time_out :
-            self.logger.info( f"Modbus modbus_poller Interval is less than communication timeout of {comm_time_out} msec. " )  
-            self.disable_polling()
+        if not self.ModbusConfigError :
+            for dvcname in self.modbus_device_keys:
+                device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port )
+                dn = device_thread.get_device_name()    
+                self.devices[dn] = device_thread 
+                self.devices[dn].start()
+                while self.devices[dn].get_plug() == None :
+                    time.sleep( 0.1 )
         
         # ppost a startup event showing the device is active 
         evt = device_capnp.DeviceEvent.new_message()
@@ -466,10 +315,11 @@ class ModbusDevice(Component):
         evt.values = [ 0.0 ]      
         evt.names = [ "" ]
         evt.units = [ "" ]
-        evt.device = self.device_name
+        evt.device = "ModbusDevice"
         evt.error = 0
         evt.et = 0.0
         self.postEvent( evt )
+        self.logger.info(f"handleActivate() complete")
 
 
    # Should be called before __destroy__ when app is shutting down.  
@@ -493,16 +343,16 @@ class ModbusDevice(Component):
 
     # Clean up and shutdown 
     def __destroy__(self):
-        if self.modbus_poller.running() == True :
-            self.disable_polling()
-            
-            if self.master != None :
-                self.master.close()
-            
-            self.modbus_poller.terminate() 
+        keys = list( self.devices.keys() )
+        for k in keys:
+            thd = self.devices[k]
+            thd.deactivate()
+            thd.join( timeout=5.0 )
+            if thd.is_alive() :
+                self.logger.warn( f"Failed to terminate thread!" )
 
-        self.logger.info("__destroy__ complete for - %s" % self.device_name)    
-
+        self.logger.info(f"__destroy__() complete")
+ 
     #post an event if the required attributes exist and the event is valid
     def postEvent(self, evt):
         try:
