@@ -184,7 +184,8 @@ class ModbusSlave(threading.Thread):
                                         data_format=data_fmt )
 
         response = list( modbus_response )
-        self.logger.warn( f"modbus reply = {response}" )
+        if self.debugMode :
+            self.logger.info( f"modbus reply = {response}" )
         # if the write is successful the result is:
         # [ (starting address), (number of registers written) ]
         if len( response ) == 2 :
@@ -242,10 +243,11 @@ class ModbusSlave(threading.Thread):
                         for d in results:
                             vals.append( d["values"][0] )
                             units.append( d["units"] )
-                            parms.append( d["command"] ) 
-                        self.logger.info( f"{self.get_device_name()} vals={vals}" ) 
-                        self.logger.info( f"{self.get_device_name()} units={units}" ) 
-                        self.logger.info( f"{self.get_device_name()} parms={parms}" ) 
+                            parms.append( d["command"] )
+                        if self.debugMode :     
+                            self.logger.info( f"{self.get_device_name()} vals={vals}" ) 
+                            self.logger.info( f"{self.get_device_name()} units={units}" ) 
+                            self.logger.info( f"{self.get_device_name()} parms={parms}" ) 
                         ansmsg.values = list(vals)
                         ansmsg.units = list(units)
                         ansmsg.params = list(parms)

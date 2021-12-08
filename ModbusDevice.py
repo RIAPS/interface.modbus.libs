@@ -96,7 +96,6 @@ class ModbusDevice(Component):
     # riaps:keep_device_port:begin
     def on_device_port(self):
         # receive
-        self.logger.warn( f"ModbusDevice:on_device_port()" )
         start = datetime.datetime.now()  # measure how long it takes to complete query
         msg_bytes = self.device_port.recv()  # required to remove message from queue
         msg = device_capnp.DeviceQry.from_bytes(msg_bytes)
