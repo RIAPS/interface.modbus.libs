@@ -78,6 +78,23 @@ class ModbusDevice(Component):
 
     # riaps:keep_constr:end
 
+# riaps:keep_modbus_evt_port:begin
+    def on_modbus_evt_port(self):
+        msg = self.modbus_evt_port.recv_pyobj()
+        evtmsg = device_capnp.DeviceEvent.new_message()
+        evtmsg.event = msg.event
+        evtmsg.command = msg.command
+        evtmsg.names = list(msg.names)
+        evtmsg.values = list(msg.values)
+        evtmsg.units = list(msg.units)
+        evtmsg.device = msg.device
+        evtmsg.error = msg.error
+        evtmsg.et = msg.et
+        msgbytes =  evtmsg.to_bytes()
+        self.event_port.send( msgbytes )
+ # riaps:keep_modbus_evt_port:end
+
+
 # riaps:keep_modbus_cmd_port:begin
     def on_modbus_cmd_port(self):
         msg = self.modbus_cmd_port.recv_pyobj()
@@ -305,7 +322,7 @@ class ModbusDevice(Component):
     def handleActivate(self):
         if not self.ModbusConfigError :
             for dvcname in self.modbus_device_keys:
-                device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port )
+                device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port, self.modbus_evt_port )
                 dn = device_thread.get_device_name()    
                 self.devices[dn] = device_thread 
                 self.devices[dn].start()

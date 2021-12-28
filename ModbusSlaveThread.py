@@ -17,12 +17,69 @@ import serial
 import spdlog
 import device_capnp
 
+class ModbusPoller( threading.Thread ) :
+    def __init__( self, logger, dvcname, master, params, eventport, interval_ms ) :
+        threading.Thread.__init__( self )
+        self.logger = logger
+        self.params = params
+        self.master = master
+        self.device_name = dvcname
+        self.eventport = eventport
+        self.interval_ms = interval_ms
+
+        self.numparms = len( self.params )
+        if self.numparms < 1 :
+            self.numparms = 1
+
+        self.poll_interval_ms = self.interval_ms/self.numparms
+        self.plug = None
+        self.active = threading.Event()
+        self.active.set()
+
+    def get_plug( self ):
+        return self.plug
+
+    def deactivate(self):
+        self.active.clear()
+
+    def run(self):
+        current_item = 1
+        self.logger.info( f"Modbus poller {self.device_name} thread started" ) 
+        self.plug = self.eventport.setupPlug(self)
+        self.poller = zmq.Poller()
+        self.poller.register( self.plug, zmq.POLLIN )
+
+        while self.active.is_set() :
+            s = dict( self.poller.poll( self.poll_interval_ms ) )
+            if len(s) > 0 :
+                # currently any message sent to the poller terminates the thread
+                # this can do other things if needed
+                msg = self.plug.recv_pyobj()
+                self.deactivate()
+            else:
+                # do polling            
+                # if current_item < self.numparms :
+                evtmsg = device_capnp.DeviceEvent.new_message()
+                evtmsg.event = "POLLED"
+                evtmsg.command = "TEST"
+                evtmsg.names = list( [ "param1", ] )
+                evtmsg.values = list( [ 123.0, ] )
+                evtmsg.units = list( [ "watts", ] )
+                evtmsg.device = self.device_name
+                evtmsg.error = 0
+                evtmsg.et = 0.0
+                msgbytes =  evtmsg.to_bytes()
+                self.plug.send_pyobj( evtmsg )
+
 class ModbusSlave(threading.Thread):
-    def __init__( self, logger, config, deviceport ) :
+    def __init__( self, logger, config, deviceport, eventport=None ) :
         threading.Thread.__init__( self )
         self.logger = logger
         self.dvc = None
         self.deviceport = deviceport
+        self.eventport = eventport
+        self.polling_thread = None
+        self.poll_dict = {}
         self.active = threading.Event()
         self.active.set()
         self.dormant = threading.Event()
@@ -93,7 +150,33 @@ class ModbusSlave(threading.Thread):
                 else :
                     self.logger.info(f"Modbus device has no communication configuration defined.")
                     self.master = None
-                    
+
+
+                if self.master != None and self.eventport != None:
+                    if "poll" in list( self.dvc.keys() ):
+                        if self.dvc["poll"] :
+                            for v in self.dvc["poll"] :
+                                poll_func = self.dvc[ v ]
+                                function_code = poll_func['function']
+                                starting_address = poll_func['start']
+                                length = poll_func['length']
+                                scale = poll_func['Units'][0]
+                                units = poll_func['Units'][1]
+                                if 'data_format' in list(poll_func.keys()):
+                                    data_fmt = poll_func['data_format']
+                                else:
+                                    data_fmt = ''
+                                
+                                self.poll_dict[v] = [ function_code, starting_address, length, scale, units, data_fmt ]
+
+                            if len( self.poll_dict.keys() ) >= 1 :
+                                self.polling_thread = ModbusPoller( self.logger, 
+                                                                    self.device_name,
+                                                                    self.master, 
+                                                                    self.poll_dict,
+                                                                    self.eventport, 
+                                                                    self.interval )
+
             except KeyError as kex:
                 self.logger.info(f"Modbus configuration is missing required setting: {kex}")    
                 self.ModbusConfigError = True
@@ -111,6 +194,12 @@ class ModbusSlave(threading.Thread):
 
     def deactivate(self):
         self.active.clear()
+
+    def pause(self):
+        self.dormant.set()
+
+    def resume(self):
+        self.dormant.clear()
 
     def read_modbus(self, command ):
         modbus_func = self.dvc[ command ]
@@ -199,11 +288,15 @@ class ModbusSlave(threading.Thread):
         return results
 
     def run(self):
-        self.logger.info( f"Modbus slave {self.device_name} thread started" ) 
+        self.logger.info( f"Modbus slave {self.device_name} thread started" )             
         self.plug = self.deviceport.setupPlug(self)
         self.poller = zmq.Poller()
         self.poller.register( self.plug, zmq.POLLIN )
         if not self.ModbusConfigError :
+            #if a polling thread was configured start it now
+            if self.polling_thread != None :
+                self.polling_thread.start()
+
             while self.active.is_set() :
                 s = dict( self.poller.poll( 1000.0 ) )
                 if not self.dormant.is_set() :
@@ -258,6 +351,14 @@ class ModbusSlave(threading.Thread):
                 else:
                     self.logger.info( f"Device is dormant, ignoring commands!" )
 
+            if self.polling_thread != None :
+                self.polling_thread.deactivate()
+                self.polling_thread.join( 5.0 )
+                if self.polling_thread.is_alive() :
+                    self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
+                else:
+                    self.logger.info( f"Modbus slave {self.get_device_name()} poling thread exited." )     
+                                             
             self.logger.info( f"Modbus slave {self.get_device_name()} thread exited." ) 
         else:
             self.logger.info( f"Modbus slave {self.get_device_name()} thread exited due to configuration errors!" ) 
