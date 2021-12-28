@@ -26,7 +26,7 @@ class ModbusPoller( threading.Thread ) :
         self.device_name = dvcname
         self.eventport = eventport
         self.interval_ms = interval_ms
-
+        self.slave = 1
         self.numparms = len( self.params )
         if self.numparms < 1 :
             self.numparms = 1
@@ -35,6 +35,8 @@ class ModbusPoller( threading.Thread ) :
         self.plug = None
         self.active = threading.Event()
         self.active.set()
+        self.param_keys = self.params.keys()
+        self.logger.info( f"Modbus polled parameters..." ) 
 
     def get_plug( self ):
         return self.plug
@@ -50,26 +52,36 @@ class ModbusPoller( threading.Thread ) :
         self.poller.register( self.plug, zmq.POLLIN )
 
         while self.active.is_set() :
-            s = dict( self.poller.poll( self.poll_interval_ms ) )
-            if len(s) > 0 :
-                # currently any message sent to the poller terminates the thread
-                # this can do other things if needed
-                msg = self.plug.recv_pyobj()
-                self.deactivate()
-            else:
-                # do polling            
-                # if current_item < self.numparms :
-                evtmsg = device_capnp.DeviceEvent.new_message()
-                evtmsg.event = "POLLED"
-                evtmsg.command = "TEST"
-                evtmsg.names = list( [ "param1", ] )
-                evtmsg.values = list( [ 123.0, ] )
-                evtmsg.units = list( [ "watts", ] )
-                evtmsg.device = self.device_name
-                evtmsg.error = 0
-                evtmsg.et = 0.0
-                msgbytes =  evtmsg.to_bytes()
-                self.plug.send_pyobj( evtmsg )
+            for k in self.param_keys :
+                # self.logger.info( f"{k}:{self.params[k]}" ) 
+                # cmdlist = [ function_code, starting_address, length, scale, units, data_fmt ]
+                cmdlist = self.params[k]
+                s = dict( self.poller.poll( self.poll_interval_ms ) )
+                if len(s) > 0 :
+                    # currently any message sent to the poller terminates the thread
+                    # this can do other things if needed
+                    msg = self.plug.recv_pyobj()
+                    self.deactivate()
+                    break
+                else:
+                    response = list( self.master.execute(   self.slave,
+                                                            getattr(cst, cmdlist[0]),
+                                                            cmdlist[1],
+                                                            quantity_of_x=cmdlist[2],
+                                                            data_format=cmdlist[5] ) )
+                    # do polling            
+                    # if current_item < self.numparms :
+                    evtmsg = device_capnp.DeviceEvent.new_message()
+                    evtmsg.event = "POLLED"
+                    evtmsg.command = str( k )
+                    evtmsg.names = list( [ k, ] )
+                    evtmsg.values = list( response )
+                    evtmsg.units = list( [cmdlist[4], ] )
+                    evtmsg.device = self.device_name
+                    evtmsg.error = 0
+                    evtmsg.et = 0.0
+                    msgbytes =  evtmsg.to_bytes()
+                    self.plug.send_pyobj( evtmsg )
 
 class ModbusSlave(threading.Thread):
     def __init__( self, logger, config, deviceport, eventport=None ) :
