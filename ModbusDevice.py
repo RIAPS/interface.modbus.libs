@@ -152,7 +152,7 @@ class ModbusDevice(Component):
         evt.values = [ 0.0 ]      
         evt.names = [ "" ]
         evt.units = [ "" ]
-        evt.device = "ModbusDevice"
+        evt.device = f"{self.modbus_device_keys}"
         evt.error = 0
         evt.et = 0.0
         self.postEvent( evt )
