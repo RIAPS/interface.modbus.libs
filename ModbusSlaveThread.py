@@ -340,9 +340,9 @@ class ModbusSlave(threading.Thread):
                     if len(s) > 0 :
                         msg = self.plug.recv_pyobj()
                         results = []
+                        ansmsg = device_capnp.DeviceAns.new_message()
+                        ansmsg.error = 0
                         for idx, p in enumerate(msg.params):
-                            ansmsg = device_capnp.DeviceAns.new_message()
-                            ansmsg.error = 0
                             cmd = f"{p}_{msg.operation}"
                             if self.debugMode :
                                 self.logger.info( f"ModbusSlaveThread {self.get_device_name()} message request={cmd}" )
