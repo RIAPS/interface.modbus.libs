@@ -49,6 +49,7 @@ class ModbusDevice(Component):
 
                 if "GobalDebugMode" in list( configs.keys() ):
                     self.global_debug_mode = configs["GobalDebugMode"]
+                    self.logger.info( f"Debug setting for all devices are overridden: GlobalDebugMode={self.global_debug_mode}" )
                 
                 for c in configs["configs"]:
                     cfgdev = None
