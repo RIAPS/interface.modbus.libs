@@ -203,7 +203,7 @@ class ModbusDevice(Component):
         try:
             if evt != None :
                 self.event_port.send( evt.to_bytes() )
-                self.logger.info( f"Posted event: {evt.event}!" )                
+                self.logger.info( f"ModbusDevice::postEvent( {evt.event} )" )                
             else:
                 self.logger.warn( f"Invalid event: {evt}!" )                
         except AttributeError:
