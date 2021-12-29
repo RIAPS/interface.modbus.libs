@@ -98,6 +98,8 @@ class ModbusDevice(Component):
         evtmsg.error = msg.error
         evtmsg.et = msg.et
         self.postEvent( evtmsg )
+        if self.global_debug_mode == 1:
+            self.logger.info(f"ModbusDevice::on_modbus_evt_port( {evtmsg.device}:{evtmsg.event} )")
  # riaps:keep_modbus_evt_port:end
 
 
@@ -113,6 +115,8 @@ class ModbusDevice(Component):
         ansmsg.msgcounter = msg.msgcounter    
         msgbytes =  ansmsg.to_bytes()
         self.device_port.send( msgbytes )
+        if self.global_debug_mode == 1:
+            self.logger.info(f"ModbusDevice::on_modbus_cmd_port( {ansmsg.device} )")
 # riaps:keep_modbus_cmd_port:end
 
 
@@ -146,13 +150,18 @@ class ModbusDevice(Component):
             for dvcname in self.modbus_device_keys:
                 device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port, self.modbus_evt_port )
                 # override the local debug setting if the top level configuration requests it
-                device_thread.enable_debug_mode( enable=self.global_debug_mode )
+                if self.global_debug_mode <= 1:
+                    device_thread.enable_debug_mode( enable=False )
+                elif self.global_debug_mode >= 2:
+                    device_thread.enable_debug_mode( enable=True )
+ 
                 dn = device_thread.get_device_name()    
                 self.devices[dn] = device_thread 
                 self.devices[dn].start()
                 while self.devices[dn].get_plug() == None :
                     time.sleep( 0.1 )
-        
+
+
         # post a startup event showing the device is active 
         evt = device_capnp.DeviceEvent.new_message()
         evt.event = "ACTIVE"
@@ -203,7 +212,8 @@ class ModbusDevice(Component):
         try:
             if evt != None :
                 self.event_port.send( evt.to_bytes() )
-                self.logger.info( f"ModbusDevice::postEvent( {evt.event} )" )                
+                if self.global_debug_mode == 1:
+                    self.logger.info( f"ModbusDevice::postEvent( {evt.event} )" )                
             else:
                 self.logger.warn( f"Invalid event: {evt}!" )                
         except AttributeError:
