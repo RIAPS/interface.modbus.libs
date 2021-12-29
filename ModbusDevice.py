@@ -201,7 +201,7 @@ class ModbusDevice(Component):
         for k in keys:
             thd = self.devices[k]
             thd.deactivate()
-            thd.join( timeout=5.0 )
+            thd.join( timeout=10.0 )
             if thd.is_alive() :
                 self.logger.warn( f"Failed to terminate thread!" )
 
