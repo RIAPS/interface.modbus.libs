@@ -18,7 +18,7 @@ import spdlog
 import device_capnp
 
 class ModbusPoller( threading.Thread ) :
-    def __init__( self, logger, dvcname, master, params, eventport, interval_ms ) :
+    def __init__( self, logger, dvcname, slaveid, master, params, eventport, interval_ms ) :
         threading.Thread.__init__( self )
         self.logger = logger
         self.params = params
@@ -26,7 +26,7 @@ class ModbusPoller( threading.Thread ) :
         self.device_name = dvcname
         self.eventport = eventport
         self.interval_ms = interval_ms
-        self.slave = 1
+        self.slave = slaveid
         self.numparms = len( self.params )
         if self.numparms < 1 :
             self.numparms = 1
