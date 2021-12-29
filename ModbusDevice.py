@@ -39,7 +39,7 @@ class ModbusDevice(Component):
         self.modbus_device_cfgs = {}
         self.modbus_device_keys = []
         self.devices = {}
-        self.global_debug_mode = False
+        self.global_debug_mode = 0
 
         try:
             if os.path.exists( config ) :
