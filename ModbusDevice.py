@@ -203,9 +203,10 @@ class ModbusDevice(Component):
         try:
             if evt != None :
                 self.event_port.send( evt.to_bytes() )
+                self.logger.info( f"Posted event: {evt.event}!" )                
             else:
-                self.logger.info( f"Invalid event: {evt}!" )                
+                self.logger.warn( f"Invalid event: {evt}!" )                
         except AttributeError:
-            self.logger.info( f"Modbus attribute [self.event_port] is not defined! Cannot process event{evt}! " )  
+            self.logger.warn( f"Modbus attribute [self.event_port] is not defined! Cannot process event{evt}! " )  
  
 # riaps:keep_impl:end
