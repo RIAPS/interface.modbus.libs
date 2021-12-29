@@ -39,12 +39,17 @@ class ModbusDevice(Component):
         self.modbus_device_cfgs = {}
         self.modbus_device_keys = []
         self.devices = {}
+        self.global_debug_mode = False
+
         try:
             if os.path.exists( config ) :
                 # Load config file to interact with Modbus device
                 with open(config, 'r') as cfglist:
                     configs = yaml.safe_load( cfglist )
 
+                if "GobalDebugMode" in list( configs.keys() ):
+                    self.global_debug_mode = configs["GobalDebugMode"]
+                
                 for c in configs["configs"]:
                     cfgdev = None
                     if os.path.exists( c ) :
@@ -57,6 +62,7 @@ class ModbusDevice(Component):
                     else:
                         self.ModbusConfigError = True
                         self.logger.info( f"Device config:{c} does not exist!" )
+                
 
                 # Get the names of all the devices
                 self.modbus_device_keys = list( self.modbus_device_cfgs.keys() )
@@ -139,6 +145,8 @@ class ModbusDevice(Component):
         if not self.ModbusConfigError :
             for dvcname in self.modbus_device_keys:
                 device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port, self.modbus_evt_port )
+                # override the local debug setting if the top level configuration requests it
+                device_thread.enable_debug_mode( enable=self.global_debug_mode )
                 dn = device_thread.get_device_name()    
                 self.devices[dn] = device_thread 
                 self.devices[dn].start()
