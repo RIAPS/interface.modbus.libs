@@ -53,30 +53,39 @@ class ModbusPoller( threading.Thread ) :
 
         while self.active.is_set() :
             for k in self.param_keys :
-                # self.logger.info( f"{k}:{self.params[k]}" ) 
-                # cmdlist = [ function_code, starting_address, length, scale, units, data_fmt ]
                 cmdlist = self.params[k]
+                function_code = getattr(cst, cmdlist[0])
+                starting_address = cmdlist[1]
+                length = cmdlist[2]
+                scale = cmdlist[3]
+                units = cmdlist[4]
+                data_fmt = cmdlist[5]
                 s = dict( self.poller.poll( self.poll_interval_ms ) )
-                if len(s) > 0 :
+                if len(s) > 0 : # process messages from the main slave thread
                     # currently any message sent to the poller terminates the thread
                     # this can do other things if needed
                     msg = self.plug.recv_pyobj()
                     self.deactivate()
                     break
-                else:
+                else:  # do polling 
+                    #read the parameter from the Modbus device           
                     response = list( self.master.execute(   self.slave,
-                                                            getattr(cst, cmdlist[0]),
-                                                            cmdlist[1],
-                                                            quantity_of_x=cmdlist[2],
-                                                            data_format=cmdlist[5] ) )
-                    # do polling            
-                    # if current_item < self.numparms :
+                                                            function_code,
+                                                            starting_address,
+                                                            quantity_of_x=length,
+                                                            data_format=data_fmt ) )
+                    if len( response ) == 1:
+                        response[0] = response[0] * scale
+                    else:
+                        for idx, n in response :
+                            response[idx] = float(n)                        
+                    
                     evtmsg = device_capnp.DeviceEvent.new_message()
                     evtmsg.event = "POLLED"
-                    evtmsg.command = str( k )
+                    evtmsg.command = "READ"
                     evtmsg.names = list( [ k, ] )
                     evtmsg.values = list( response )
-                    evtmsg.units = list( [cmdlist[4], ] )
+                    evtmsg.units = list( [ units, ] )
                     evtmsg.device = self.device_name
                     evtmsg.error = 0
                     evtmsg.et = 0.0
