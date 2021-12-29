@@ -45,6 +45,59 @@ class ModbusPoller( threading.Thread ) :
     def deactivate(self):
         self.active.clear()
 
+    # Do not allow the polling loop to send messages to the modbus device
+    def disable_polling(self):
+        self.logger.info("Disabling modbus polling for - %s" % self.device_name)
+        self.poll_exit = True
+
+    # Allow the polling loop to send messages to the modbus device
+    def enable_polling(self):
+        self.logger.info("Enabling modbus polling for - %s" % self.device_name)
+        self.poll_exit = False
+
+    """ Function creates a dictionary of associated items    
+    start : the address of the first register that was read
+    length : the number of registers read
+    dev : the configuration data for all modbus-device's commands
+    data : the raw data returned from the modbus query
+
+    This function matches the data, by index, with the configured address and then
+    adds an entry in the dictionary.
+    Each entry contains:
+    Value: In floating point and scaled as required
+    Units: The units of the measurement
+    Address: The register address"""
+
+    def format_multi_register_read(self, start, length, dev, data):
+        resp_dict = {}
+        for p in dev:
+            # only look at read parameter definitions in the device configuration
+            if p.find('_READ') != -1:
+                # get the parameter information
+                parm = dev[p]
+                # make sure there is a units field in the definition
+                if 'Units' in list(parm.keys()):
+                    cur_addr = parm['start']
+                    cur_len = parm['length']
+                    # do add entries for commands that read multiple registers
+                    if cur_len == 1:
+                        if start <= cur_addr < (start + length):
+                            # apply the scale and format the data into floating point
+                            cur_scaler = float(parm['Units'][0])
+                            cur_units = parm['Units'][1]
+                            index = cur_addr - start
+                            resp_dict[p] = {'Value': (float(data[index]) * cur_scaler),
+                                            'Units': cur_units,
+                                            'Address': cur_addr}
+                        else:
+                            pass
+                else:
+                    pass
+            else:
+                pass
+
+        return resp_dict
+
     def run(self):
         self.logger.info( f"Modbus poller {self.device_name} thread started" ) 
         self.plug = self.eventport.setupPlug(self)
@@ -320,8 +373,17 @@ class ModbusSlave(threading.Thread):
         else:
             results = { "command" : command, "values" : [], "units" : units }
 
-
         return results
+
+    # set an individual bit on a value
+    def set_bit(self, value, bit):
+        """ Sets a bit in the data 'value' at position index specified by 'bit' """
+        return value | (1 << bit)
+
+    # clear an individual bit on a value
+    def clr_bit(self, value, bit):
+        """ Clears a bit in the data 'value' at position index specified by 'bit' """
+        return value & ~(1 << bit)
 
     def run(self):
         self.logger.info( f"Modbus slave {self.device_name} thread started" )             

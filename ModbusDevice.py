@@ -97,8 +97,7 @@ class ModbusDevice(Component):
         evtmsg.device = msg.device
         evtmsg.error = msg.error
         evtmsg.et = msg.et
-        msgbytes =  evtmsg.to_bytes()
-        self.event_port.send( msgbytes )
+        self.postEvent( evtmsg )
  # riaps:keep_modbus_evt_port:end
 
 
@@ -154,7 +153,7 @@ class ModbusDevice(Component):
                 while self.devices[dn].get_plug() == None :
                     time.sleep( 0.1 )
         
-        # ppost a startup event showing the device is active 
+        # post a startup event showing the device is active 
         evt = device_capnp.DeviceEvent.new_message()
         evt.event = "ACTIVE"
         evt.command = "STARTUP"
@@ -165,7 +164,7 @@ class ModbusDevice(Component):
         evt.error = 0
         evt.et = 0.0
         self.postEvent( evt )
-        self.logger.info(f"handleActivate() complete")
+        self.logger.info(f"ModbusDevice::handleActivate() complete")
 
 
    # Should be called before __destroy__ when app is shutting down.  
@@ -197,7 +196,7 @@ class ModbusDevice(Component):
             if thd.is_alive() :
                 self.logger.warn( f"Failed to terminate thread!" )
 
-        self.logger.info(f"__destroy__() complete")
+        self.logger.info(f"ModbusDevice::__destroy__() complete")
  
     #post an event if the required attributes exist and the event is valid
     def postEvent(self, evt):
@@ -208,68 +207,5 @@ class ModbusDevice(Component):
                 self.logger.info( f"Invalid event: {evt}!" )                
         except AttributeError:
             self.logger.info( f"Modbus attribute [self.event_port] is not defined! Cannot process event{evt}! " )  
-
  
-    # Do not allow the polling loop to send messages to the modbus device
-    def disable_polling(self):
-        self.logger.info("Disabling modbus polling for - %s" % self.device_name)
-        self.poll_exit = True
-
-    # Allow the polling loop to send messages to the modbus device
-    def enable_polling(self):
-        self.logger.info("Enabling modbus polling for - %s" % self.device_name)
-        self.poll_exit = False
-
-    # set an individual bit on a value
-    def set_bit(self, value, bit):
-        """ Sets a bit in the data 'value' at position index specified by 'bit' """
-        return value | (1 << bit)
-
-    # clear an individual bit on a value
-    def clr_bit(self, value, bit):
-        """ Clears a bit in the data 'value' at position index specified by 'bit' """
-        return value & ~(1 << bit)
-
-    """ Function creates a dictionary of associated items    
-    start : the address of the first register that was read
-    length : the number of registers read
-    dev : the configuration data for all modbus-device's commands
-    data : the raw data returned from the modbus query
-
-    This function matches the data, by index, with the configured address and then
-    adds an entry in the dictionary.
-    Each entry contains:
-    Value: In floating point and scaled as required
-    Units: The units of the measurement
-    Address: The register address"""
-
-    def format_multi_register_read(self, start, length, dev, data):
-        resp_dict = {}
-        for p in dev:
-            # only look at read parameter definitions in the device configuration
-            if p.find('_READ') != -1:
-                # get the parameter information
-                parm = dev[p]
-                # make sure there is a units field in the definition
-                if 'Units' in list(parm.keys()):
-                    cur_addr = parm['start']
-                    cur_len = parm['length']
-                    # do add entries for commands that read multiple registers
-                    if cur_len == 1:
-                        if start <= cur_addr < (start + length):
-                            # apply the scale and format the data into floating point
-                            cur_scaler = float(parm['Units'][0])
-                            cur_units = parm['Units'][1]
-                            index = cur_addr - start
-                            resp_dict[p] = {'Value': (float(data[index]) * cur_scaler),
-                                            'Units': cur_units,
-                                            'Address': cur_addr}
-                        else:
-                            pass
-                else:
-                    pass
-            else:
-                pass
-
-        return resp_dict
 # riaps:keep_impl:end
