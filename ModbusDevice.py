@@ -116,7 +116,7 @@ class ModbusDevice(Component):
         msgbytes =  ansmsg.to_bytes()
         self.device_port.send( msgbytes )
         if self.global_debug_mode == 1:
-            self.logger.info(f"ModbusDevice::on_modbus_cmd_port( {ansmsg.device}:{ansmsg.params}:{ansmsg.values}:{ansmsg.msgcounter} )")
+            self.logger.info(f"ModbusDevice::on_modbus_cmd_port( {ansmsg.device}:Answer:{ansmsg.params}:{ansmsg.values}:{ansmsg.msgcounter} )")
 # riaps:keep_modbus_cmd_port:end
 
 
