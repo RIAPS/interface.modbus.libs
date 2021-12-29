@@ -89,7 +89,6 @@ class ModbusPoller( threading.Thread ) :
                     evtmsg.device = self.device_name
                     evtmsg.error = 0
                     evtmsg.et = 0.0
-                    msgbytes =  evtmsg.to_bytes()
                     self.plug.send_pyobj( evtmsg )
 
 class ModbusSlave(threading.Thread):
