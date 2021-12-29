@@ -27,16 +27,17 @@ class ModbusPoller( threading.Thread ) :
         self.eventport = eventport
         self.interval_ms = interval_ms
         self.slave = slaveid
-        self.numparms = len( self.params )
-        if self.numparms < 1 :
-            self.numparms = 1
+        self.param_keys = self.params.keys()
+        self.numparms = len( self.param_keys )
 
-        self.poll_interval_ms = self.interval_ms/self.numparms
+        if self.numparms >= 1 :
+            self.poll_interval_ms = self.interval_ms/self.numparms
+        else:
+            self.poll_interval_ms = self.interval_ms
+
         self.plug = None
         self.active = threading.Event()
         self.active.set()
-        self.param_keys = self.params.keys()
-        self.logger.info( f"Modbus polled parameters..." ) 
 
     def get_plug( self ):
         return self.plug
@@ -45,7 +46,6 @@ class ModbusPoller( threading.Thread ) :
         self.active.clear()
 
     def run(self):
-        current_item = 1
         self.logger.info( f"Modbus poller {self.device_name} thread started" ) 
         self.plug = self.eventport.setupPlug(self)
         self.poller = zmq.Poller()
@@ -193,6 +193,7 @@ class ModbusSlave(threading.Thread):
                             if len( self.poll_dict.keys() ) >= 1 :
                                 self.polling_thread = ModbusPoller( self.logger, 
                                                                     self.device_name,
+                                                                    self.slave,
                                                                     self.master, 
                                                                     self.poll_dict,
                                                                     self.eventport, 
