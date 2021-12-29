@@ -236,6 +236,7 @@ class ModbusSlave(threading.Thread):
     
     def enable_debug_mode(self, enable=True):
         self.debugMode = enable
+        self.logger.info( f"Modbus Slave [{self.device_name}] debugMode is set to [{self.debugMode}]" )
 
     def read_modbus(self, command ):
         modbus_func = self.dvc[ command ]
