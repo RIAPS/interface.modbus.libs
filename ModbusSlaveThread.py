@@ -455,7 +455,7 @@ class ModbusSlave(threading.Thread):
                 if self.polling_thread.is_alive() :
                     self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
                 else:
-                    self.logger.info( f"Modbus slave {self.get_device_name()} poling thread exited." )     
+                    self.logger.info( f"Modbus slave {self.get_device_name()} polling thread exited normally." )     
                                              
             self.logger.info( f"Modbus slave {self.get_device_name()} thread exited." ) 
         else:
