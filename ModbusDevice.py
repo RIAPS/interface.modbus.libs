@@ -99,7 +99,7 @@ class ModbusDevice(Component):
         evtmsg.et = msg.et
         self.postEvent( evtmsg )
         if self.global_debug_mode == 1:
-            self.logger.info(f"ModbusDevice::on_modbus_evt_port( {evtmsg.device}:{evtmsg.event} )")
+            self.logger.info(f"ModbusDevice::on_modbus_evt_port( {evtmsg.device}:{evtmsg.event}:{evtmsg.names}:{evtmsg.values} )")
  # riaps:keep_modbus_evt_port:end
 
 
@@ -116,7 +116,7 @@ class ModbusDevice(Component):
         msgbytes =  ansmsg.to_bytes()
         self.device_port.send( msgbytes )
         if self.global_debug_mode == 1:
-            self.logger.info(f"ModbusDevice::on_modbus_cmd_port( {ansmsg.device} )")
+            self.logger.info(f"ModbusDevice::on_modbus_cmd_port( {ansmsg.device}:{ansmsg.params}:{ansmsg.values}:{ansmsg.msgcounter} )")
 # riaps:keep_modbus_cmd_port:end
 
 
