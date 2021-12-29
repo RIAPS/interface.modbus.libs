@@ -18,7 +18,7 @@ import spdlog
 import device_capnp
 
 class ModbusPoller( threading.Thread ) :
-    def __init__( self, logger, dvcname, master, params, eventport, interval_ms ) :
+    def __init__( self, logger, dvcname, slaveid, master, params, eventport, interval_ms ) :
         threading.Thread.__init__( self )
         self.logger = logger
         self.params = params
@@ -26,17 +26,18 @@ class ModbusPoller( threading.Thread ) :
         self.device_name = dvcname
         self.eventport = eventport
         self.interval_ms = interval_ms
-        self.slave = 1
-        self.numparms = len( self.params )
-        if self.numparms < 1 :
-            self.numparms = 1
+        self.slave = slaveid
+        self.param_keys = self.params.keys()
+        self.numparms = len( self.param_keys )
 
-        self.poll_interval_ms = self.interval_ms/self.numparms
+        if self.numparms >= 1 :
+            self.poll_interval_ms = self.interval_ms/self.numparms
+        else:
+            self.poll_interval_ms = self.interval_ms
+
         self.plug = None
         self.active = threading.Event()
         self.active.set()
-        self.param_keys = self.params.keys()
-        self.logger.info( f"Modbus polled parameters..." ) 
 
     def get_plug( self ):
         return self.plug
@@ -45,7 +46,6 @@ class ModbusPoller( threading.Thread ) :
         self.active.clear()
 
     def run(self):
-        current_item = 1
         self.logger.info( f"Modbus poller {self.device_name} thread started" ) 
         self.plug = self.eventport.setupPlug(self)
         self.poller = zmq.Poller()
@@ -53,30 +53,39 @@ class ModbusPoller( threading.Thread ) :
 
         while self.active.is_set() :
             for k in self.param_keys :
-                # self.logger.info( f"{k}:{self.params[k]}" ) 
-                # cmdlist = [ function_code, starting_address, length, scale, units, data_fmt ]
                 cmdlist = self.params[k]
+                function_code = getattr(cst, cmdlist[0])
+                starting_address = cmdlist[1]
+                length = cmdlist[2]
+                scale = cmdlist[3]
+                units = cmdlist[4]
+                data_fmt = cmdlist[5]
                 s = dict( self.poller.poll( self.poll_interval_ms ) )
-                if len(s) > 0 :
+                if len(s) > 0 : # process messages from the main slave thread
                     # currently any message sent to the poller terminates the thread
                     # this can do other things if needed
                     msg = self.plug.recv_pyobj()
                     self.deactivate()
                     break
-                else:
+                else:  # do polling 
+                    #read the parameter from the Modbus device           
                     response = list( self.master.execute(   self.slave,
-                                                            getattr(cst, cmdlist[0]),
-                                                            cmdlist[1],
-                                                            quantity_of_x=cmdlist[2],
-                                                            data_format=cmdlist[5] ) )
-                    # do polling            
-                    # if current_item < self.numparms :
+                                                            function_code,
+                                                            starting_address,
+                                                            quantity_of_x=length,
+                                                            data_format=data_fmt ) )
+                    if len( response ) == 1:
+                        response[0] = response[0] * scale
+                    else:
+                        for idx, n in response :
+                            response[idx] = float(n)                        
+                    
                     evtmsg = device_capnp.DeviceEvent.new_message()
                     evtmsg.event = "POLLED"
-                    evtmsg.command = str( k )
+                    evtmsg.command = "READ"
                     evtmsg.names = list( [ k, ] )
                     evtmsg.values = list( response )
-                    evtmsg.units = list( [cmdlist[4], ] )
+                    evtmsg.units = list( [ units, ] )
                     evtmsg.device = self.device_name
                     evtmsg.error = 0
                     evtmsg.et = 0.0
@@ -103,6 +112,7 @@ class ModbusSlave(threading.Thread):
         self.master = None
         self.slave = None
         self.debugMode = False
+        self.device = "NONE"
 
         try:
             self.device_name = list(config.keys())[0]
@@ -133,12 +143,13 @@ class ModbusSlave(threading.Thread):
 
                 if comname == 'RS232' or comname == 'Serial' :
                     try:
-                        self.master = modbus_rtu.RtuMaster(serial.Serial(port=self.dvc[comname]['device'],
-                                                                        baudrate=self.dvc[comname]['baudrate'],
-                                                                        bytesize=self.dvc[comname]['bytesize'],
-                                                                        parity=self.dvc[comname]['parity'],
-                                                                        stopbits=self.dvc[comname]['stopbits'],
-                                                                        xonxoff=self.dvc[comname]['xonxoff']))
+                        self.device = self.dvc[comname]['device']
+                        self.master = modbus_rtu.RtuMaster(serial.Serial(   port=self.device,
+                                                                            baudrate=self.dvc[comname]['baudrate'],
+                                                                            bytesize=self.dvc[comname]['bytesize'],
+                                                                            parity=self.dvc[comname]['parity'],
+                                                                            stopbits=self.dvc[comname]['stopbits'],
+                                                                            xonxoff=self.dvc[comname]['xonxoff'])   )
 
                         self.master.set_timeout(ModbusSystem.Timeouts.TTYSComm)
                         self.master.set_verbose(ModbusSystem.Debugging.Verbose)
@@ -152,6 +163,7 @@ class ModbusSlave(threading.Thread):
                     port = self.dvc[comname]['Port']
 
                     try:
+                        self.device = "TCP"
                         self.master = modbus_tcp.TcpMaster(addr, port)
                         self.master.set_timeout(ModbusSystem.Timeouts.TCPComm)
                         self.master.set_verbose(ModbusSystem.Debugging.Verbose)
@@ -164,30 +176,39 @@ class ModbusSlave(threading.Thread):
                     self.master = None
 
 
-                if self.master != None and self.eventport != None:
-                    if "poll" in list( self.dvc.keys() ):
-                        if self.dvc["poll"] :
-                            for v in self.dvc["poll"] :
-                                poll_func = self.dvc[ v ]
-                                function_code = poll_func['function']
-                                starting_address = poll_func['start']
-                                length = poll_func['length']
-                                scale = poll_func['Units'][0]
-                                units = poll_func['Units'][1]
-                                if 'data_format' in list(poll_func.keys()):
-                                    data_fmt = poll_func['data_format']
-                                else:
-                                    data_fmt = ''
-                                
-                                self.poll_dict[v] = [ function_code, starting_address, length, scale, units, data_fmt ]
+                if self.master != None :
+                    if self.eventport != None:
+                        if "poll" in list( self.dvc.keys() ):
+                            if self.dvc["poll"] :
+                                for v in self.dvc["poll"] :
+                                    poll_func = self.dvc[ v ]
+                                    function_code = poll_func['function']
+                                    starting_address = poll_func['start']
+                                    length = poll_func['length']
+                                    scale = poll_func['Units'][0]
+                                    units = poll_func['Units'][1]
+                                    if 'data_format' in list(poll_func.keys()):
+                                        data_fmt = poll_func['data_format']
+                                    else:
+                                        data_fmt = ''
+                                    
+                                    self.poll_dict[v] = [ function_code, starting_address, length, scale, units, data_fmt ]
+                        
+                        # If there are parameters to poll then create a polling thread object 
+                        if len( self.poll_dict ) == 0 :
+                            self.logger.warn(f"Modbus poller will not be started!")                        
+                            self.logger.warn(f"Modbus poller parameters are either not configured or not present in configuration file.")                        
+                        else:
+                            self.polling_thread = ModbusPoller( self.logger, 
+                                                                self.device_name,
+                                                                self.slave,
+                                                                self.master, 
+                                                                self.poll_dict,
+                                                                self.eventport, 
+                                                                self.interval )
 
-                            if len( self.poll_dict.keys() ) >= 1 :
-                                self.polling_thread = ModbusPoller( self.logger, 
-                                                                    self.device_name,
-                                                                    self.master, 
-                                                                    self.poll_dict,
-                                                                    self.eventport, 
-                                                                    self.interval )
+                    else:
+                        self.logger.info(f"Modbus poller has no RIAPS publish port defined.")                        
 
             except KeyError as kex:
                 self.logger.info(f"Modbus configuration is missing required setting: {kex}")    
@@ -212,6 +233,9 @@ class ModbusSlave(threading.Thread):
 
     def resume(self):
         self.dormant.clear()
+    
+    def enable_debug_mode(self, enable=True):
+        self.debugMode = enable
 
     def read_modbus(self, command ):
         modbus_func = self.dvc[ command ]
