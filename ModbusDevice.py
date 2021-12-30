@@ -213,7 +213,7 @@ class ModbusDevice(Component):
             if evt != None :
                 self.event_port.send( evt.to_bytes() )
                 if self.global_debug_mode == 1:
-                    self.logger.info( f"ModbusDevice::postEvent( {evt.event} )" )                
+                    self.logger.info( f"ModbusDevice::postEvent( {evt.device}, {evt.event}, {evt.names}, {evt.values} )" )                
             else:
                 self.logger.warn( f"Invalid event: {evt}!" )                
         except AttributeError:
