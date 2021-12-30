@@ -121,6 +121,7 @@ class ModbusPoller( threading.Thread ) :
                     self.deactivate()
                     break
                 else:  # do polling 
+                    start = dt.datetime.now()
                     #read the parameter from the Modbus device           
                     response = list( self.master.execute(   self.slave,
                                                             function_code,
@@ -132,7 +133,7 @@ class ModbusPoller( threading.Thread ) :
                     else:
                         for idx, n in response :
                             response[idx] = float(n)                        
-                    
+                    stop = dt.datetime.now()
                     evtmsg = device_capnp.DeviceEvent.new_message()
                     evtmsg.event = "POLLED"
                     evtmsg.command = "READ"
@@ -141,7 +142,7 @@ class ModbusPoller( threading.Thread ) :
                     evtmsg.units = list( [ units, ] )
                     evtmsg.device = self.device_name
                     evtmsg.error = 0
-                    evtmsg.et = 0.0
+                    evtmsg.et = (stop-start).total_seconds()
                     self.plug.send_pyobj( evtmsg )
 
 class ModbusSlave(threading.Thread):
