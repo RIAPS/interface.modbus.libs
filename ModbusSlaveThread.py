@@ -113,6 +113,8 @@ class ModbusPoller( threading.Thread ) :
                 scale = cmdlist[3]
                 units = cmdlist[4]
                 data_fmt = cmdlist[5]
+                max_thr = cmdlist[6]
+                min_thr = cmdlist[7]
                 s = dict( self.poller.poll( self.poll_interval_ms ) )
                 if len(s) > 0 : # process messages from the main slave thread
                     # currently any message sent to the poller terminates the thread
@@ -128,22 +130,30 @@ class ModbusPoller( threading.Thread ) :
                                                             starting_address,
                                                             quantity_of_x=length,
                                                             data_format=data_fmt ) )
+
+                    PostNewEvent = True
+
                     if len( response ) == 1:
                         response[0] = response[0] * scale
+                        if max_thr != None and min_thr != None :
+                            if max_thr >= response[0] and min_thr <= response[0] :
+                                PostNewEvent = False
                     else:
                         for idx, n in response :
-                            response[idx] = float(n)                        
+                            response[idx] = float(n)    
+
                     stop = dt.datetime.now()
-                    evtmsg = device_capnp.DeviceEvent.new_message()
-                    evtmsg.event = "POLLED"
-                    evtmsg.command = "READ"
-                    evtmsg.names = list( [ k, ] )
-                    evtmsg.values = list( response )
-                    evtmsg.units = list( [ units, ] )
-                    evtmsg.device = self.device_name
-                    evtmsg.error = 0
-                    evtmsg.et = (stop-start).total_seconds()
-                    self.plug.send_pyobj( evtmsg )
+                    if PostNewEvent == True :
+                        evtmsg = device_capnp.DeviceEvent.new_message()
+                        evtmsg.event = "POLLED"
+                        evtmsg.command = "READ"
+                        evtmsg.names = list( [ k, ] )
+                        evtmsg.values = list( response )
+                        evtmsg.units = list( [ units, ] )
+                        evtmsg.device = self.device_name
+                        evtmsg.error = 0
+                        evtmsg.et = (stop-start).total_seconds()
+                        self.plug.send_pyobj( evtmsg )
 
 class ModbusSlave(threading.Thread):
     def __init__( self, logger, config, deviceport, eventport=None ) :
@@ -244,8 +254,22 @@ class ModbusSlave(threading.Thread):
                                         data_fmt = poll_func['data_format']
                                     else:
                                         data_fmt = ''
-                                    
-                                    self.poll_dict[v] = [ function_code, starting_address, length, scale, units, data_fmt ]
+
+                                    if self.dvc["poll"][v]:
+                                        max_thr = self.dvc["poll"][v][0]
+                                        min_thr = self.dvc["poll"][v][1]
+                                    else:
+                                        max_thr = None
+                                        min_thr = None
+
+                                    self.poll_dict[v] = [   function_code, 
+                                                            starting_address, 
+                                                            length, 
+                                                            scale, 
+                                                            units, 
+                                                            data_fmt,
+                                                            max_thr,
+                                                            min_thr ]
                         
                         # If there are parameters to poll then create a polling thread object 
                         if len( self.poll_dict ) == 0 :
