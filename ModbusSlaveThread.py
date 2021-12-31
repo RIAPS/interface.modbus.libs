@@ -256,8 +256,8 @@ class ModbusSlave(threading.Thread):
                                         data_fmt = ''
 
                                     if self.dvc["poll"][v]:
-                                        max_thr = self.dvc["poll"][v][0]
-                                        min_thr = self.dvc["poll"][v][1]
+                                        max_thr = self.dvc["poll"][v]["max"]
+                                        min_thr = self.dvc["poll"][v]["min"]
                                     else:
                                         max_thr = None
                                         min_thr = None
