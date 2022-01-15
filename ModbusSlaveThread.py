@@ -113,6 +113,7 @@ class ModbusPoller( threading.Thread ) :
                 self.deactivate()
                 break
             else:  # do polling 
+                start = dt.datetime.now()
                 for k in self.param_keys :
                     cmdlist = self.params[k]
                     function_code = getattr(cst, cmdlist[0])
@@ -123,7 +124,7 @@ class ModbusPoller( threading.Thread ) :
                     data_fmt = cmdlist[5]
                     max_thr = cmdlist[6]
                     min_thr = cmdlist[7]
-                    start = dt.datetime.now()
+
                     #read the parameter from the Modbus device           
                     response = list( self.master.execute(   self.slave,
                                                             function_code,
