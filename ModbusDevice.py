@@ -129,13 +129,16 @@ class ModbusDevice(Component):
 
         dvcname = msg.device
         # if the device name is empty then use the first device in the list of keys
-        if dvcname == "" :
-            dvcname = self.modbus_device_keys[0]
-
-        dthd =  self.devices[ dvcname ]
-        plug_identity = self.modbus_cmd_port.get_plug_identity( dthd.get_plug() )
-        self.modbus_cmd_port.set_identity( plug_identity )
-        self.modbus_cmd_port.send_pyobj( msg )
+        try:
+            self.modbus_cmd_port
+            if dvcname == "" :
+                dvcname = self.modbus_device_keys[0]
+                dthd =  self.devices[ dvcname ]
+                plug_identity = self.modbus_cmd_port.get_plug_identity( dthd.get_plug() )
+                self.modbus_cmd_port.set_identity( plug_identity )
+                self.modbus_cmd_port.send_pyobj( msg )
+        except AttributeError:
+            self.logger.info(f"ModbusDevice::on_device_port() No modbus_cmd_port is not defined!")
 
     # riaps:keep_device_port:end
 
@@ -147,20 +150,33 @@ class ModbusDevice(Component):
     # riaps:keep_impl:begin
     def handleActivate(self):
         if not self.ModbusConfigError :
-            for dvcname in self.modbus_device_keys:
-                device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port, self.modbus_evt_port )
-                # override the local debug setting if the top level configuration requests it
-                if self.global_debug_mode <= 1:
-                    device_thread.enable_debug_mode( enable=False )
-                elif self.global_debug_mode >= 2:
-                    device_thread.enable_debug_mode( enable=True )
- 
-                dn = device_thread.get_device_name()    
-                self.devices[dn] = device_thread 
-                self.devices[dn].start()
-                while self.devices[dn].get_plug() == None :
-                    time.sleep( 0.1 )
+            # check if the modbus event port is defined 
+            try:
+                # if defined then proceed normally
+                self.modbus_evt_port
+            except AttributeError :
+                # if not defined then create the attribute and set it to none
+                self.on_modbus_evt_port = None
+                self.logger.warn(f"ModbusDevice::handleActivate() RIAP::modbus_evt_port is not defined!")
 
+            #create the device threads and poller threads if needed
+            try:
+                self.modbus_cmd_port
+                for dvcname in self.modbus_device_keys:
+                    device_thread = ModbusSlave(self.logger, self.modbus_device_cfgs[dvcname], self.modbus_cmd_port, self.modbus_evt_port )
+                    # override the local debug setting if the top level configuration requests it
+                    if self.global_debug_mode <= 1:
+                        device_thread.enable_debug_mode( enable=False )
+                    elif self.global_debug_mode >= 2:
+                        device_thread.enable_debug_mode( enable=True )
+    
+                    dn = device_thread.get_device_name()    
+                    self.devices[dn] = device_thread 
+                    self.devices[dn].start()
+                    while self.devices[dn].get_plug() == None :
+                        time.sleep( 0.1 )
+            except AttributeError :
+                self.logger.warn(f"ModbusDevice::handleActivate() Cannot create threads, RIAPS::modbus_cmd_port is not defined!")
 
         # post a startup event showing the device is active 
         evt = device_capnp.DeviceEvent.new_message()
