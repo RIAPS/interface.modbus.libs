@@ -65,7 +65,9 @@ NEC-BESS-VM1:
    - Neighbors: []
    - VoltageRegulateDG: 1
 
+
    - - only READ commands are allowed to be used as polling functions 
+
 
    - poll:
    -    ReferenceInput_READ:
@@ -74,6 +76,7 @@ NEC-BESS-VM1:
    -       min: 1.0        
    - debugMode: False
  
+
    - realpowermode_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
@@ -88,6 +91,7 @@ NEC-BESS-VM1:
    -       - None
    -    #Info: 
  
+
    - realpowermode_WRITE:
    -    info: Description of parameter or command
    -    function: WRITE_MULTIPLE_REGISTERS
@@ -101,6 +105,7 @@ NEC-BESS-VM1:
    -       - 1
    -       - None
  
+
    - ReferenceInput_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
@@ -115,6 +120,7 @@ NEC-BESS-VM1:
    -       - None
    -    #Info: Generator frequency setpoint
  
+
    - ReferenceInput_WRITE:
    -    info: Description of parameter or command
    -    function: WRITE_MULTIPLE_REGISTERS
