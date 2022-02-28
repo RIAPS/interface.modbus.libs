@@ -154,7 +154,7 @@ https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/d
 
 The file link above shows the message elements and the specific structures are listed below.
 
-##### Returned data from a polled event 
+##### Returned data from a polled or device event 
         struct DeviceEvent {
             event @0: Text = "";
             command @1: Text = "";
@@ -165,6 +165,15 @@ The file link above shows the message elements and the specific structures are l
             error @6: Int16 = 0;
             et    @7: Float32 = 0.0;
         }
+
+    Decription of elements
+        event: the event type: Can be "POLLED","ERROR","ACTIVE" types
+        command: the data name of the event, if "POLLED" the parameter name.
+        values: list of values, in floating point, scaled as required
+        units: list of the units corresponding to each value
+        device: name of the Modbus device posting the event
+        error: any error detected or 0 if no error
+        et: the total time for the Modbus read operation including RIAPS device overhead 
 
 ##### Returned data from a Modbus query 
         struct DeviceAns {
