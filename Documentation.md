@@ -39,13 +39,13 @@ Starting up the ModbusDevice is passed in the main configuration file.  In this 
 
 filename: interface.modbus.apps/TestModbusOpal/cfg/Devices5.yaml
 
-configs:
-  - ./cfg/NEC-BESS-VM1.yaml
-  - ./cfg/NEC-BESS-VM2.yaml
-  - ./cfg/NEC-BESS-VM3.yaml
-  - ./cfg/NEC-BESS-VM4.yaml
-  - ./cfg/NEC-BESS-VM5.yaml
-GobalDebugMode: 1 # 0=no debug messages, 1=RAIPS Device level debug, 2=Modbus slave low level messages
+    configs:
+      - ./cfg/NEC-BESS-VM1.yaml
+      - ./cfg/NEC-BESS-VM2.yaml
+      - ./cfg/NEC-BESS-VM3.yaml
+      - ./cfg/NEC-BESS-VM4.yaml
+      - ./cfg/NEC-BESS-VM5.yaml
+    GobalDebugMode: 1 # 0=no debug messages, 1=RAIPS Device level debug, 2=Modbus slave low level messages
 
 The above file lists the configuration for 5 independent Modbus-devices. Each file in the list contains the specific mapping and setup for the target Modbus hardware registers. 
  
@@ -68,11 +68,10 @@ Sample taken from filename: interface.modbus.apps/TestModbusOpal/cfg/NEC-BESS-VM
 ##### Neighbors: []
 ##### VoltageRegulateDG: 1
 ##### poll:
-##### ReferenceInput_READ:
-   - max: 2.0 
-   - min: 1.0        
+      ReferenceInput_READ:
+            max: 2.0 
+            min: 1.0        
 ##### debugMode: False
-
 ##### realpowermode_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
@@ -86,7 +85,6 @@ Sample taken from filename: interface.modbus.apps/TestModbusOpal/cfg/NEC-BESS-VM
           - 1
           - None
    -    #Info: Generator real power (P)
- 
 
 ##### realpowermode_WRITE:
    -    info: Description of parameter or command
@@ -132,15 +130,64 @@ Sample taken from filename: interface.modbus.apps/TestModbusOpal/cfg/NEC-BESS-VM
    -    #Info: Generator reference 
 
 
+    Description of Parameters
+    - start  : The hardware address of the register to access
+    - length : Number of int16 required to hold the data  
+    - output_value : defaut value to write  
+    - data_format : standard python data format from struct module. "" is no formating  
+    - units : 
+      - scaling ( used to scale as required by the Modbus hardware ex: 1.0, 0.1, 0.01 )
+      - units ( for example HZ, W, S, mSec, uSec )  
+
+
 The above configuration shows the details to configure a ModbusTCP node as slave 1.  The polling interval, if required, is set to 5 seconds.  In this example 'ReferenceInput' is polled and and if the mesaured value is less than 1.0 or greater than 2.0 an event is posted via modbus_event_port.
 
-##### Description of Parameters
-- start  : The hardware address of the register to access
-- length : Number of int16 required to hold the data  
-- output_value : defaut value to write  
-- data_format : standard python data format from struct module. "" is no formating  
-- units : 
-  - scaling ( used to scale as required by the Modbus hardware ex: 1.0, 0.1, 0.01 )
-  - units ( for example HZ, W, S, mSec, uSec )  
+
+Each device file lised in the main configuration will create a distinct thread to communicate to the configured device. To access the device the RIAPS application passes a command
+in the form of DEVICE, MODE, PARAMETER[=VALUE].  For example, using the above config description, a valid command would be:
+
+    NEC-BESS-VM1, READ, ReferenceInput
+
+To handle the messaging involved events and requests have a custom message format defined by CAPNP message structures. The following describe the format for these messages which are contained in the device.capnp file of the application.
+
+https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/device.capnp
+
+The above file shows the message elements.
+
+##### Returned data from a polled event 
+        struct DeviceEvent {
+            event @0: Text = "";
+            command @1: Text = "";
+            names @2: List(Text);
+            values @3: List(Float64);
+            units @4: List(Text) = ["None"];
+            device @5: Text = "";
+            error @6: Int16 = 0;
+            et    @7: Float32 = 0.0;
+        }
+
+##### Returned data from a Modbus query 
+        struct DeviceAns {
+            device @0: Text = "";
+            reply @1: Text= "";
+            operation @3: Text = "";
+            params @2: List(Text);
+            values @4: List(Float64)=[0.0];
+            states @5: List(Bool)=[false];
+            units @6: List(Text);
+            error @7: Int16 = 0;
+            et    @8: Float32 = 0.0;
+            msgcounter @9: Int64;
+        }
+
+##### Data sent to initiate a Modbus Query/Write 
+        struct DeviceQry {
+            device @0: Text = "";
+            operation @1: Text = "";
+            params @2: List(Text);
+            values @3: List(Float64) = [0];
+            timestamp @4: Float64;
+            msgcounter @5: Int64;
+        }
 
 
