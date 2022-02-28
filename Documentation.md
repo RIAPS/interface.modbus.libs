@@ -53,7 +53,6 @@ NEC-BESS-VM1:
    - TCP:
    -    Address: 10.0.1.107 
    -    Port: 501
-- 
    - RS232:
    -   device: /dev/ttyS1
    -   baudrate: 57600
@@ -61,21 +60,20 @@ NEC-BESS-VM1:
    -   parity: 'N'
    -   stopbits: 1
    -   xonxoff: 0
-- 
    - Slave: 1
    - Interval: 5000
    - Neighbors: []
    - VoltageRegulateDG: 1
 
-   - only READ commands are allowed to be used as polling functions 
-- 
+   - - only READ commands are allowed to be used as polling functions 
+
    - poll:
    -    ReferenceInput_READ:
    -       # if min > polled_value or max > polled_value an event is posted
    -       max: 2.0 
    -       min: 1.0        
    - debugMode: False
-- 
+ 
    - realpowermode_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
@@ -89,7 +87,7 @@ NEC-BESS-VM1:
    -       - 1
    -       - None
    -    #Info: 
-- 
+ 
    - realpowermode_WRITE:
    -    info: Description of parameter or command
    -    function: WRITE_MULTIPLE_REGISTERS
@@ -102,7 +100,7 @@ NEC-BESS-VM1:
    -    Units:
    -       - 1
    -       - None
-- 
+ 
    - ReferenceInput_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
@@ -116,7 +114,7 @@ NEC-BESS-VM1:
    -       - 1
    -       - None
    -    #Info: Generator frequency setpoint
-- 
+ 
    - ReferenceInput_WRITE:
    -    info: Description of parameter or command
    -    function: WRITE_MULTIPLE_REGISTERS
