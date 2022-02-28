@@ -152,7 +152,7 @@ To handle the messaging involved events and requests have a custom message forma
 
 https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/device.capnp
 
-The file link above shows the message elements and the specifice structures are listed below.
+The file link above shows the message elements and the specific structures are listed below.
 
 ##### Returned data from a polled event 
         struct DeviceEvent {
