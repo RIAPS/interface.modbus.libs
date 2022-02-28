@@ -13,15 +13,17 @@ https://github.com/ljean/modbus-tk
 
 ### Structure
 
-RIAPS application may interact with the Modbus library in one of two ways, by query/answer, or, by receiving events from polled parameters.  To use the library an application must derive a device component from the ModbusDevice object.  After this the messages used must be defined and connected to RIAPS-device as shown below:
+RIAPS application may interact with the Modbus library in one of two ways, by query/answer, or, by receiving events from polled parameters.  To use the library an application must derive a device component from the ModbusDevice object. In addition, the messages used must be defined and connected to RIAPS-device as shown below:
 
+##### Python code
     class GEN1(ModbusDevice):
         def __init__(self, config):
             super(GEN1, self).__init__(config)       
             self.logger.info("setup GEN1")
 
-The RIAPS-device must be defined similar to the defintion below to allow acces to the correct RIAPS ports and accept the configuration file.
+The RIAPS-device must be defined similar to the defintion below to allow access to the correct RIAPS ports and accept the configuration file.
 
+##### RIAPS Application code
 	device GEN1(config)
 	{
 		timer poller 10 sec;
@@ -31,11 +33,11 @@ The RIAPS-device must be defined similar to the defintion below to allow acces t
 		ans device_port: (Gen1DeviceQry, Gen1DeviceAns) timed;
 	}
 
-In the above device definition, modbus_evt_port and modbus_cmd_port are required and must be named as shown to allow communication to the Modbus RIAPS device.  THe application must alow define event_port if events are required and setup in the device configuration files.  In order to query the RIAPS-Modbus device the device_port is required as this is the primary port for most communitions.
+In the above device definition, 'modbus_evt_port', 'modbus_cmd_port', and 'device_port' are required and must be named as shown to allow communication to the Modbus RIAPS device.  The application must define 'event_port' if events are required.  In order to query the RIAPS-Modbus device 'device_port' is required as this is the primary port for most communitions.
 
 ##### Operation
 
-Starting up the ModbusDevice is passed in the main configuration file.  In this file, all the configured Modbus-device files are listed as shown in the sample below:
+Starting up, the ModbusDevice derived object is passed in the main configuration file name.  In this file, all the configured Modbus-device files are listed as shown in the sample below:
 
 ##### Main Config Example
 
