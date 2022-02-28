@@ -4,7 +4,7 @@
 
 Modbus is used to communicate and control hardware based in a, present day, standard power grid.  The intent of this project is to provide a common interface with mapping to desired parameters using an external configuration file.  This allows for the main control parameters to be defined and used across many variants by changing the address mapping and data definition of the parameters.
 
-The RIAPS Modbus library is implemented as a device-component and, as such, is allowed elevated access to hardware resources required for Modbus communication.  Two types of communication exist, ModbusTCP and ModbusRTU.  Using the configuration file, communication over either of the previouly mentioned Modbus protocols can be realized.  T
+The RIAPS Modbus library is implemented as a device-component and, as such, is allowed elevated access to hardware resources required for Modbus communication.  Two types of communication exist, ModbusTCP and ModbusRTU.  Using the configuration file, communication over either of the previouly mentioned Modbus protocols can be realized. 
 
 To use this library requires installatioin of mobdbus-tk, see details at link below:
 
