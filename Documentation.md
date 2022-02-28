@@ -1,13 +1,17 @@
 # RIAPS Modbus Library
 
-Overview
+### Overview
 
 Modbus is used to communicate and control hardware based in a, present day, standard power grid.  The intent of this project is to provide a common interface with mapping to desired parameters using an external configuration file.  This allows for the main control parameters to be defined and used across many variants by changing the address mapping and data definition of the parameters.
 
 The RIAPS Modbus library is implemented as a device-component and, as such, is allowed elevated access to hardware resources required for Modbus communication.  Two types of communication exist, ModbusTCP and ModbusRTU.  Using the configuration file, communication over either of the previouly mentioned Modbus protocols can be realized.  T
 
+To use this library requires installatioin of mobdbus-tk, see details at link below:
 
-Structure
+https://github.com/ljean/modbus-tk
+
+
+### Structure
 
 RIAPS application may interact with the Modbus library in one of two ways, by query/answer, or, by receiving events from polled parameters.  To use the library an application must derive a device component from the ModbusDevice object.  After this the messages used must be defined and connected to RIAPS-device as shown below:
 
@@ -130,5 +134,13 @@ Sample taken from filename: interface.modbus.apps/TestModbusOpal/cfg/NEC-BESS-VM
 
 The above configuration shows the details to configure a ModbusTCP node as slave 1.  The polling interval, if required, is set to 5 seconds.  In this example 'ReferenceInput' is polled and and if the mesaured value is less than 1.0 or greater than 2.0 an event is posted via modbus_event_port.
 
+##### Description of Parameters
+- start  : The hardware address of the register to access
+- length : Number of int16 required to hold the data  
+- output_value : defaut value to write  
+- data_format : standard python data format from struct module. "" is no formating  
+- units : 
+  - scaling ( used to scale as required by the Modbus hardware ex: 1.0, 0.1, 0.01 )
+  - units ( for example HZ, W, S, mSec, uSec )  
 
 
