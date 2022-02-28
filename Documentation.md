@@ -33,11 +33,14 @@ The RIAPS-device must be defined similar to the defintion below to allow acces t
 
 In the above device definition, modbus_evt_port and modbus_cmd_port are required and must be named as shown to allow communication to the Modbus RIAPS device.  THe application must alow define event_port if events are required and setup in the device configuration files.  In order to query the RIAPS-Modbus device the device_port is required as this is the primary port for most communitions.
 
-Operation
+##### Operation
 
 Starting up the ModbusDevice is passed in the main configuration file.  In this file, all the configured Modbus-device files are listed as shown in the sample below:
 
-filename: interface.modbus.apps/TestModbusOpal/cfg/Devices5.yaml
+##### Main Config Example
+
+https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/Devices5.yaml
+
 
     configs:
       - ./cfg/NEC-BESS-VM1.yaml
@@ -49,7 +52,8 @@ filename: interface.modbus.apps/TestModbusOpal/cfg/Devices5.yaml
 
 The above file lists the configuration for 5 independent Modbus-devices. Each file in the list contains the specific mapping and setup for the target Modbus hardware registers. 
  
-Sample taken from filename: interface.modbus.apps/TestModbusOpal/cfg/NEC-BESS-VM1.yaml
+##### Single Device Config
+https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/NEC-BESS-VM1.yaml
 
 #### NEC-BESS-VM1: 
 ##### Description: NEC BESS1
@@ -173,7 +177,7 @@ The file link above shows the message elements and the specific structures are l
         units: list of the units corresponding to each value
         device: name of the Modbus device posting the event
         error: any error detected or 0 if no error
-        et: the total time for the Modbus read operation including RIAPS device overhead 
+        et: total time for the Modbus read operation including RIAPS device overhead 
 
 ##### Returned data from a Modbus query 
         struct DeviceAns {
@@ -188,6 +192,18 @@ The file link above shows the message elements and the specific structures are l
             et    @8: Float32 = 0.0;
             msgcounter @9: Int64;
         }
+
+    Decription of elements
+        device: name of the Modbus device posting the event
+        operation: READ or WRITE
+        params: list of names for each parameter value  
+        values: list of values, in floating point, scaled as required
+        states: list of states for each value
+        units: list of the units corresponding to each value
+        reply: additional reply data if needed
+        error: any error detected or 0 if no error
+        et: total time for the Modbus read operation including RIAPS device overhead 
+        msgcounter: for sequencing and debugging messages
 
 ##### Data sent to initiate a Modbus Query/Write 
         struct DeviceQry {
