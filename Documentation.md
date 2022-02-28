@@ -47,37 +47,29 @@ The above file lists the configuration for 5 independent Modbus-devices. Each fi
  
 Sample taken from filename: interface.modbus.apps/TestModbusOpal/cfg/NEC-BESS-VM1.yaml
 
-NEC-BESS-VM1: 
-   - Description: NEC BESS1
-   - 
-   - TCP:
+#### NEC-BESS-VM1: 
+##### Description: NEC BESS1
+##### TCP:
    -    Address: 10.0.1.107 
    -    Port: 501
-   - RS232:
+##### RS232:
    -   device: /dev/ttyS1
    -   baudrate: 57600
    -   bytesize: 8
    -   parity: 'N'
    -   stopbits: 1
    -   xonxoff: 0
-   - Slave: 1
-   - Interval: 5000
-   - Neighbors: []
-   - VoltageRegulateDG: 1
+##### Slave: 1
+##### Interval: 5000
+##### Neighbors: []
+##### VoltageRegulateDG: 1
+##### poll:
+##### ReferenceInput_READ:
+   - max: 2.0 
+   - min: 1.0        
+##### debugMode: False
 
-
-   - - only READ commands are allowed to be used as polling functions 
-
-
-   - poll:
-   -    ReferenceInput_READ:
-   -       # if min > polled_value or max > polled_value an event is posted
-   -       max: 2.0 
-   -       min: 1.0        
-   - debugMode: False
- 
-
-   - realpowermode_READ:
+##### realpowermode_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
    -    start: 7000
@@ -87,12 +79,12 @@ NEC-BESS-VM1:
    -    expected_length: -1
    -    write_starting_address_FC23: 0
    -    Units:
-   -       - 1
-   -       - None
-   -    #Info: 
+          - 1
+          - None
+   -    #Info: Generator real power (P)
  
 
-   - realpowermode_WRITE:
+##### realpowermode_WRITE:
    -    info: Description of parameter or command
    -    function: WRITE_MULTIPLE_REGISTERS
    -    start: 7000
@@ -102,11 +94,11 @@ NEC-BESS-VM1:
    -    expected_length: -1
    -    write_starting_address_FC23: 0
    -    Units:
-   -       - 1
-   -       - None
- 
+          - 1
+          - None
+   -    #Info: Generator real power (P)
 
-   - ReferenceInput_READ:
+##### ReferenceInput_READ:
    -    info: Description of parameter or command
    -    function: READ_HOLDING_REGISTERS
    -    start: 7020
@@ -116,12 +108,12 @@ NEC-BESS-VM1:
    -    expected_length: -1
    -    write_starting_address_FC23: 0
    -    Units:
-   -       - 1
-   -       - None
-   -    #Info: Generator frequency setpoint
+          - 1
+          - None
+   -    #Info: Generator reference 
  
 
-   - ReferenceInput_WRITE:
+##### ReferenceInput_WRITE:
    -    info: Description of parameter or command
    -    function: WRITE_MULTIPLE_REGISTERS
    -    start: 7020
@@ -131,8 +123,9 @@ NEC-BESS-VM1:
    -    expected_length: -1
    -    write_starting_address_FC23: 0
    -    Units:
-   -       - 1
-   -       - None
+          - 1
+          - None
+   -    #Info: Generator reference 
 
 
 The above configuration shows the details to configure a ModbusTCP node as slave 1.  The polling interval, if required, is set to 5 seconds.  In this example 'ReferenceInput' is polled and and if the mesaured value is less than 1.0 or greater than 2.0 an event is posted via modbus_event_port.
