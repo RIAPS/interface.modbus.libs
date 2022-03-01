@@ -135,6 +135,19 @@ https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/c
           - None
    -    #Info: Generator reference 
 
+##### Dcvoltage_READ:
+    -   info: Description of parameter or command
+    -   function: READ_HOLDING_REGISTERS
+    -   start: 2000
+    -   length: 1
+    -   output_value: 0
+    -   data_format: ""
+    -   expected_length: -1
+    -   write_starting_address_FC23: 0
+    -   Units:
+    -      - 0.1
+    -      - Volts
+    -   #Info: 
 
     Description of Parameters
     - start  : The hardware address of the register to access
@@ -143,7 +156,7 @@ https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/c
     - data_format : standard python data format from struct module. "" is no formating  
     - units : 
       - scaling ( used to scale as required by the Modbus hardware ex: 1.0, 0.1, 0.01 )
-      - units ( for example HZ, W, S, mSec, uSec )  
+      - units ( for example HZ, W, S, V, A, mS, uS )  
 
 
 The above configuration shows the details to configure a ModbusTCP node as slave 1.  The polling interval, if required, is set to 5 seconds.  In this example 'ReferenceInput' is polled and and if the mesaured value is less than 1.0 or greater than 2.0 an event is posted via modbus_event_port.
@@ -216,5 +229,32 @@ The file link above shows the message elements and the specific structures are l
             timestamp @4: Float64;
             msgcounter @5: Int64;
         }
+
+    Decription of elements
+        device: name of the Modbus device posting the event
+        operation: READ or WRITE
+        params: list of names for each parameter value  
+        values: list of values, in floating point, scaled as required
+        units: list of the units corresponding to each value
+        timestamp: timestamp for the Modbus operation 
+        msgcounter: for sequencing and debugging messages
+
+##### Detailed operation
+
+    A device query may contain a list of parameters to READ/WRITE.  
+    For example: The query structure can be setup as follows:
+        DeviceQry.params ={ "realpowermode", "ReferenceInput", "Dcvoltage" }  
+        DeviceQry.operation = "READ"
+        DeviceQry.device = "NEC-BESS-VM1"
+
+    When this messaged is passed to the RIAPS Modbus device using the device_port messaging
+    connection in RIAPS, the underlying RIAPS device will query all three parameters from the 
+    hardware Modbus device and return the data in a DeviceAns structure.
+        DeviceAns.device = "NEC-BESS-VM1"
+        DeviceAns.params = { "realpowermode", "ReferenceInput", "Dcvoltage" }
+        DeviceAns.values = { 4.0, 1.0, 395.7 }
+        DeviceAns.units = { "None", "None", "Volts" } 
+        
+
 
 
