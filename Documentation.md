@@ -239,7 +239,7 @@ The file link above shows the message elements and the specific structures are l
         timestamp: timestamp for the Modbus operation 
         msgcounter: for sequencing and debugging messages
 
-##### Detailed operation
+##### Detailed Query operation
 
     A device query may contain a list of parameters to READ/WRITE.  
     For example: The query structure can be setup as follows:
