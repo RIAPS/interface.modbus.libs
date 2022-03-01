@@ -33,7 +33,7 @@ The RIAPS-device must be defined similar to the defintion below to allow access 
 		ans device_port: (Gen1DeviceQry, Gen1DeviceAns) timed;
 	}
 
-In the above device definition, 'modbus_evt_port', 'modbus_cmd_port', and 'device_port' are required and must be named as shown to allow communication to the Modbus RIAPS device.  The application must define 'event_port' if events are required.  In order to query the RIAPS-Modbus device 'device_port' is required as this is the primary port for most communitions.
+In the above device definition, 'modbus_evt_port', 'modbus_cmd_port', and 'device_port' are required and must be named as shown to allow communication to the Modbus RIAPS device.  The application must define 'event_port' if events are required.  In order to query the RIAPS-Modbus device 'device_port' is required as this is the primary port for most communications.
 
 ##### Operation
 
