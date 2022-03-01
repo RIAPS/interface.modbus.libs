@@ -253,8 +253,16 @@ The file link above shows the message elements and the specific structures are l
         DeviceAns.device = "NEC-BESS-VM1"
         DeviceAns.params = { "realpowermode", "ReferenceInput", "Dcvoltage" }
         DeviceAns.values = { 4.0, 1.0, 395.7 }
-        DeviceAns.units = { "None", "None", "Volts" } 
-        
+        DeviceAns.units = { "None", "None", "Volts" }
+The TestModbusOpal application demostrates a simlpe Modbus system that can read multiple Modbus devices
+and log the response information. Message structures and interconnections between devices and components via the defined 
+messaging is shown in the diagram below.
 
+       
+![Blkdiagram](Images/blkdiagram.png)
+
+This application was deployed to a single machine for testing and used simluated ModbusTCP
+devices.  Information on how setup multiple simluated ModbusTCP devices can be found at the following 
+link. https://github.com/RIAPS/interface.modbus.apps/tree/multidevice/MobusTesting/ModbusSim
 
 
