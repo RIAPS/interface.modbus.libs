@@ -39,7 +39,9 @@ In the above device definition, 'modbus_evt_port', 'modbus_cmd_port', and 'devic
 
 Starting up, the ModbusDevice derived object is passed in the main configuration file name.  In this file, all the configured Modbus-device files are listed as shown in the sample below:
 
-##### Main Config Example
+## Configuration
+
+### Main Config Example
 
 https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/Devices5.yaml
 
@@ -54,7 +56,7 @@ https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/c
 
 The above file lists the configuration for 5 independent Modbus-devices. Each file in the list contains the specific mapping and setup for the target Modbus hardware registers. 
  
-##### Single Device Config
+### Single Device Config
 https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/NEC-BESS-VM1.yaml
 
 #### NEC-BESS-VM1: 
