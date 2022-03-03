@@ -1,6 +1,6 @@
 # RIAPS Modbus Library
 
-### Overview
+## Overview
 
 Modbus is used to communicate and control hardware based in a, present day, standard power grid.  The intent of this project is to provide a common interface with mapping to desired parameters using an external configuration file.  This allows for the main control parameters to be defined and used across many variants by changing the address mapping and data definition of the parameters.
 
@@ -11,11 +11,11 @@ To use this library requires installatioin of mobdbus-tk, see details at link be
 https://github.com/ljean/modbus-tk
 
 
-### Structure
+## Structure
 
 RIAPS application may interact with the Modbus library in one of two ways, by query/answer, or, by receiving events from polled parameters.  To use the library an application must derive a device component from the ModbusDevice object. In addition, the messages used must be defined and connected to RIAPS-device as shown below:
 
-##### Python code
+#### Python code
     class GEN1(ModbusDevice):
         def __init__(self, config):
             super(GEN1, self).__init__(config)       
@@ -23,7 +23,7 @@ RIAPS application may interact with the Modbus library in one of two ways, by qu
 
 The RIAPS-device must be defined similar to the defintion below to allow access to the correct RIAPS ports and accept the configuration file.
 
-##### RIAPS Application code
+#### RIAPS Application code
 	device GEN1(config)
 	{
 		timer poller 10 sec;
@@ -33,13 +33,15 @@ The RIAPS-device must be defined similar to the defintion below to allow access 
 		ans device_port: (Gen1DeviceQry, Gen1DeviceAns) timed;
 	}
 
-In the above device definition, 'modbus_evt_port', 'modbus_cmd_port', and 'device_port' are required and must be named as shown to allow communication to the Modbus RIAPS device.  The application must define 'event_port' if events are required.  In order to query the RIAPS-Modbus device 'device_port' is required as this is the primary port for most communitions.
+In the above device definition, 'modbus_evt_port', 'modbus_cmd_port', and 'device_port' are required and must be named as shown to allow communication to the Modbus RIAPS device.  The application must define 'event_port' if events are required.  In order to query the RIAPS-Modbus device 'device_port' is required as this is the primary port for most communications.
 
-##### Operation
+### Operation
 
 Starting up, the ModbusDevice derived object is passed in the main configuration file name.  In this file, all the configured Modbus-device files are listed as shown in the sample below:
 
-##### Main Config Example
+## Configuration
+
+### Main Config Example
 
 https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/Devices5.yaml
 
@@ -54,7 +56,7 @@ https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/c
 
 The above file lists the configuration for 5 independent Modbus-devices. Each file in the list contains the specific mapping and setup for the target Modbus hardware registers. 
  
-##### Single Device Config
+### Single Device Config
 https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/NEC-BESS-VM1.yaml
 
 #### NEC-BESS-VM1: 
