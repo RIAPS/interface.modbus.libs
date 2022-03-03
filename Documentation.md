@@ -58,102 +58,125 @@ The above file lists the configuration for 5 independent Modbus-devices. Each fi
 https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/cfg/NEC-BESS-VM1.yaml
 
 #### NEC-BESS-VM1: 
-##### Description: NEC BESS1
-##### TCP:
-   -    Address: 10.0.1.107 
-   -    Port: 501
-##### RS232:
-   -   device: /dev/ttyS1
-   -   baudrate: 57600
-   -   bytesize: 8
-   -   parity: 'N'
-   -   stopbits: 1
-   -   xonxoff: 0
-##### Slave: 1
-##### Interval: 5000
-##### Neighbors: []
-##### VoltageRegulateDG: 1
-##### poll:
-      ReferenceInput_READ:
-            max: 2.0 
-            min: 1.0        
-##### debugMode: False
-##### realpowermode_READ:
-   -    info: Description of parameter or command
-   -    function: READ_HOLDING_REGISTERS
-   -    start: 7000
-   -    length: 1
-   -    output_value: 0
-   -    data_format: ""
-   -    expected_length: -1
-   -    write_starting_address_FC23: 0
-   -    Units:
-          - 1
-          - None
-   -    #Info: Generator real power (P)
+    Description: NEC BESS1
 
-##### realpowermode_WRITE:
-   -    info: Description of parameter or command
-   -    function: WRITE_MULTIPLE_REGISTERS
-   -    start: 7000
-   -    length: 1
-   -    output_value: [0]
-   -    data_format: ""
-   -    expected_length: -1
-   -    write_starting_address_FC23: 0
-   -    Units:
-          - 1
-          - None
-   -    #Info: Generator real power (P)
+*Note: TCP defines a ModbusTCP connection*
 
-##### ReferenceInput_READ:
-   -    info: Description of parameter or command
-   -    function: READ_HOLDING_REGISTERS
-   -    start: 7020
-   -    length: 2
-   -    output_value: 0
-   -    data_format: ">f"
-   -    expected_length: -1
-   -    write_starting_address_FC23: 0
-   -    Units:
-          - 1
-          - None
-   -    #Info: Generator reference 
- 
+    TCP:
+        Address: 10.0.1.107 
+        Port: 501
 
-##### ReferenceInput_WRITE:
-   -    info: Description of parameter or command
-   -    function: WRITE_MULTIPLE_REGISTERS
-   -    start: 7020
-   -    length: 2
-   -    output_value: [0]
-   -    data_format: ">f"
-   -    expected_length: -1
-   -    write_starting_address_FC23: 0
-   -    Units:
-          - 1
-          - None
-   -    #Info: Generator reference 
+*Note: RS232 defines a ModbusRTU serial connection*
 
-##### Dcvoltage_READ:
-    -   info: Description of parameter or command
-    -   function: READ_HOLDING_REGISTERS
-    -   start: 2000
-    -   length: 1
-    -   output_value: 0
-    -   data_format: ""
-    -   expected_length: -1
-    -   write_starting_address_FC23: 0
-    -   Units:
-    -      - 0.1
-    -      - Volts
-    -   #Info: 
+    RS232:
+       device: /dev/ttyS1
+       baudrate: 57600
+       bytesize: 8
+       parity: 'N'
+       stopbits: 1
+       xonxoff: 0
 
-    Description of Parameters
+*Note: if both TCP and RS232 are defined RS232 takes precedence*
+
+    Slave: 1
+    Interval: 5000
+    Neighbors: []
+    VoltageRegulateDG: 1
+
+*Note: poll defines a list of parameters to read periodically*
+
+    poll:
+        ReferenceInput_READ:
+            [max: 2.0] 
+            [min: 1.0]      
+*Note: both min and max may be omitted but, if used, both min and max must be present*
+
+    debugMode: False
+
+*Note: debugMode: True: enables debugging and informational messages*
+
+   <font color='green'>realpowermode_READ:</font>
+
+    info: Description of parameter or command
+    function: READ_HOLDING_REGISTERS
+    start: 7000
+    length: 1
+    output_value: 0
+    data_format: ""
+    expected_length: -1
+    write_starting_address_FC23: 0
+    Units:
+        - 1
+        - None
+    #Info: Generator real power mode
+
+   <font color='green'>realpowermode_WRITE:</font>
+
+    info: Description of parameter or command
+    function: WRITE_MULTIPLE_REGISTERS
+    start: 7000
+    length: 1
+    output_value: [0]
+    data_format: ""
+    expected_length: -1
+    write_starting_address_FC23: 0
+    Units:
+        - 1
+        - None
+    #Info: Generator real power mode
+
+   <font color='green'>ReferenceInput_READ:</font>
+
+    info: Description of parameter or command
+    function: READ_HOLDING_REGISTERS
+    start: 7020
+    length: 2
+    output_value: 0
+    data_format: ">f"
+    expected_length: -1
+    write_starting_address_FC23: 0
+    Units:
+    - 1
+    - None
+    #Info: Generator reference 
+    
+    
+   <font color='green'>ReferenceInput_WRITE:</font>
+
+    info: Description of parameter or command
+    function: WRITE_MULTIPLE_REGISTERS
+    start: 7020
+    length: 2
+    output_value: [0]
+    data_format: ">f"
+    expected_length: -1
+    write_starting_address_FC23: 0
+    Units:
+    - 1
+    - None
+    #Info: Generator reference 
+    
+   <font color='green'>Dcvoltage_READ:</font>
+
+    info: Description of parameter or command
+    function: READ_HOLDING_REGISTERS
+    start: 2000
+    length: 1
+    output_value: 0
+    data_format: ""
+    expected_length: -1
+    write_starting_address_FC23: 0
+    Units:
+        - 0.1
+        - Volts
+    #Info: 
+
+   <font color='green'>Description of Parameters</font>
+
     - start  : The hardware address of the register to access
     - length : Number of int16 required to hold the data  
     - output_value : defaut value to write  
-    - data_format : standard python data format from struct module. "" is no formating  
+    - data_format : standard python data format from struct module. "" means no data formating  
     - units : 
       - scaling ( used to scale as required by the Modbus hardware ex: 1.0, 0.1, 0.01 )
       - units ( for example HZ, W, S, V, A, mS, uS )  
