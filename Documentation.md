@@ -89,8 +89,8 @@ https://github.com/RIAPS/interface.modbus.apps/blob/multidevice/TestModbusOpal/c
 
     poll:
         ReferenceInput_READ:
-            [max: 2.0] 
-            [min: 1.0]      
+            max: 2.0 
+            min: 1.0      
 *Note: both min and max may be omitted but, if used, both min and max must be present*
 
     debugMode: False
