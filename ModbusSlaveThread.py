@@ -354,17 +354,22 @@ class ModbusSlave(threading.Thread):
             self.logger.info( f"Response: starting_address={starting_address}, response={response}, timestamp={t1}" )
 
         values = []
-        states = []
         for v in response:
             if bit != -1:
-                temp = int(v) & int(bit)
-                if temp != 0:
+                temp = bool(int(v) & self.set_bit(0, bit))
+                if temp :
                     values.append( 1.0 )
                 else:
                     values.append( 0.0 )
+                if self.debugMode :
+                    if temp :
+                        temp = "Set"
+                    else:
+                        temp = "Clear"
+                    self.logger.info( f"{tc.Yellow}Bit Read: command={command}, register value={v}, target bit={bit}, result={temp}{tc.RESET}" )
             else:
                 values.append( float( v * scaler ) )
-
+ 
         results = { "command" : command, "values" : values, "units" : units }
 
         if self.debugMode :
