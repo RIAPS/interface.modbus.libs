@@ -128,17 +128,17 @@ class ModbusDevice(Component):
         msg = device_capnp.DeviceQry.from_bytes(msg_bytes)
 
         dvcname = msg.device
+        if dvcname == "" :
+            dvcname = self.modbus_device_keys[0]
         # if the device name is empty then use the first device in the list of keys
         try:
             self.modbus_cmd_port
-            if dvcname == "" :
-                dvcname = self.modbus_device_keys[0]
-                dthd =  self.devices[ dvcname ]
-                plug_identity = self.modbus_cmd_port.get_plug_identity( dthd.get_plug() )
-                self.modbus_cmd_port.set_identity( plug_identity )
-                self.modbus_cmd_port.send_pyobj( msg )
+            dthd =  self.devices[ dvcname ]
+            plug_identity = self.modbus_cmd_port.get_plug_identity( dthd.get_plug() )
+            self.modbus_cmd_port.set_identity( plug_identity )
+            self.modbus_cmd_port.send_pyobj( msg )
         except AttributeError:
-            self.logger.info(f"ModbusDevice::on_device_port() No modbus_cmd_port is not defined!")
+            self.logger.info(f"ModbusDevice::on_device_port() modbus_cmd_port is not defined!")
 
     # riaps:keep_device_port:end
 
