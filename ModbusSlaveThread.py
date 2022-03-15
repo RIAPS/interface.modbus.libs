@@ -317,21 +317,24 @@ class ModbusSlave(threading.Thread):
         self.debugMode = enable
         self.logger.info( f"Modbus Slave [{self.device_name}] debugMode is set to [{self.debugMode}]" )
 
-    def read_modbus(self, command ):
+    def read_modbus(self, command, ignore_bit=False ):
         modbus_func = self.dvc[ command ]
         # read Modbus command parameters from yaml file
         function_code = modbus_func['function']
         starting_address = modbus_func['start']
         length = modbus_func['length']
-        if "bit_position" in modbus_func :
+        bit = int(-1)
+        if "bit_position" in modbus_func:
+            if not ignore_bit : 
+                bit = int( modbus_func["bit_position"] )
             units = "None"
-            scaler = 1
+            scaler = 1.0
         else:
-            scaler = modbus_func['Units'][0]
+            scaler = float(modbus_func['Units'][0])
             units = modbus_func['Units'][1]
         # scale value per yaml file and convert to int to send to Modbus slave
 
-        if 'data_format' in list(modbus_func.keys()):
+        if 'data_format' in modbus_func:
             data_fmt = modbus_func['data_format']
         else:
             data_fmt = ''
@@ -351,8 +354,16 @@ class ModbusSlave(threading.Thread):
             self.logger.info( f"Response: starting_address={starting_address}, response={response}, timestamp={t1}" )
 
         values = []
+        states = []
         for v in response:
-            values.append( float( v * scaler ) )
+            if bit != -1:
+                temp = int(v) & int(bit)
+                if temp != 0:
+                    values.append( 1.0 )
+                else:
+                    values.append( 0.0 )
+            else:
+                values.append( float( v * scaler ) )
 
         results = { "command" : command, "values" : values, "units" : units }
 
@@ -368,12 +379,12 @@ class ModbusSlave(threading.Thread):
         function_code = modbus_func['function']
         starting_address = modbus_func['start']
         length = modbus_func['length']
-        if "bit_position" in modbus_func :
+        if "bit_position" in modbus_func:
             units = "None"
             scaler = 1
             bit = int( modbus_func["bit_position"] )
             cmd = command.replace("WRITE", "READ" )
-            data = self.read_modbus( cmd )
+            data = self.read_modbus( cmd, ignore_bit=True )
             temp = int( data["values"][0] )
             if values[0] == 0:
                 values[0] = float( self.clr_bit( temp, bit ) )
@@ -382,9 +393,8 @@ class ModbusSlave(threading.Thread):
         else:
             scaler = modbus_func['Units'][0]
             units = modbus_func['Units'][1]
-
  
-        if 'data_format' in list(modbus_func.keys()):
+        if 'data_format' in modbus_func:
             data_fmt = modbus_func['data_format']
         else:
             data_fmt = ""
