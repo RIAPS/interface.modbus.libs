@@ -323,7 +323,12 @@ class ModbusSlave(threading.Thread):
         function_code = modbus_func['function']
         starting_address = modbus_func['start']
         length = modbus_func['length']
-        units = modbus_func['Units'][1]
+        if "bit_position" in modbus_func :
+            units = "None"
+            scaler = 1
+        else:
+            scaler = modbus_func['Units'][0]
+            units = modbus_func['Units'][1]
         # scale value per yaml file and convert to int to send to Modbus slave
 
         if 'data_format' in list(modbus_func.keys()):
@@ -347,7 +352,7 @@ class ModbusSlave(threading.Thread):
 
         values = []
         for v in response:
-            values.append( float( v * modbus_func['Units'][0] ) )  
+            values.append( float( v * scaler ) )
 
         results = { "command" : command, "values" : values, "units" : units }
 
@@ -363,7 +368,20 @@ class ModbusSlave(threading.Thread):
         function_code = modbus_func['function']
         starting_address = modbus_func['start']
         length = modbus_func['length']
-        units = modbus_func['Units'][1]
+        if "bit_position" in modbus_func :
+            units = "None"
+            scaler = 1
+            bit = int( modbus_func["bit_position"] )
+            cmd = command.replace("WRITE", "READ" )
+            data = self.read_modbus( cmd )
+            temp = int( data["values"][0] )
+            if values[0] == 0:
+                values[0] = float( self.clr_bit( temp, bit ) )
+            else:
+                values[0] = float( self.set_bit( temp, bit ) )
+        else:
+            scaler = modbus_func['Units'][0]
+            units = modbus_func['Units'][1]
 
  
         if 'data_format' in list(modbus_func.keys()):
@@ -374,7 +392,7 @@ class ModbusSlave(threading.Thread):
         if data_fmt == "" :
             modbus_value = []
             for v in values:
-                modbus_value.append( int( v / modbus_func['Units'][0] ) )        
+                modbus_value.append( int( v / scaler ) )        
         else:
             modbus_value = values       
 
