@@ -15,7 +15,8 @@ from libs.ModbusSystemSettings import ModbusSystem
 import libs.helper as tc
 import serial
 import spdlog
-import device_capnp
+import libs.device_capnp as msg_struct
+
 
 # Class derived from Thread to handle polling
 # master : the modbus-tk object used for communincation
@@ -145,7 +146,7 @@ class ModbusPoller( threading.Thread ) :
 
                     stop = dt.datetime.now()
                     if PostNewEvent == True :
-                        evtmsg = device_capnp.DeviceEvent.new_message()
+                        evtmsg = msg_struct.DeviceEvent.new_message()
                         evtmsg.event = "POLLED"
                         evtmsg.command = "READ"
                         evtmsg.names = list( [ k, ] )
@@ -461,7 +462,7 @@ class ModbusSlave(threading.Thread):
                     if len(s) > 0 :
                         msg = self.plug.recv_pyobj()
                         results = []
-                        ansmsg = device_capnp.DeviceAns.new_message()
+                        ansmsg = msg_struct.DeviceAns.new_message()
                         ansmsg.error = 0
                         for idx, p in enumerate(msg.params):
                             cmd = f"{p}_{msg.operation}"

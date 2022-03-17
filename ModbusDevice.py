@@ -10,7 +10,7 @@ from modbus_tk import modbus_rtu
 import modbus_tk.defines as cst
 import spdlog
 import capnp
-import device_capnp
+import libs.device_capnp as msg_struct
 import os
 import datetime
 import struct
@@ -88,7 +88,7 @@ class ModbusDevice(Component):
 # riaps:keep_modbus_evt_port:begin
     def on_modbus_evt_port(self):
         msg = self.modbus_evt_port.recv_pyobj()
-        evtmsg = device_capnp.DeviceEvent.new_message()
+        evtmsg = msg_struct.DeviceEvent.new_message()
         evtmsg.event = msg.event
         evtmsg.command = msg.command
         evtmsg.names = list(msg.names)
@@ -106,7 +106,7 @@ class ModbusDevice(Component):
 # riaps:keep_modbus_cmd_port:begin
     def on_modbus_cmd_port(self):
         msg = self.modbus_cmd_port.recv_pyobj()
-        ansmsg = device_capnp.DeviceAns.new_message()
+        ansmsg = msg_struct.DeviceAns.new_message()
         ansmsg.error = msg.error
         ansmsg.device = msg.device
         ansmsg.operation = msg.operation
@@ -125,7 +125,7 @@ class ModbusDevice(Component):
         # receive
         start = datetime.datetime.now()  # measure how long it takes to complete query
         msg_bytes = self.device_port.recv()  # required to remove message from queue
-        msg = device_capnp.DeviceQry.from_bytes(msg_bytes)
+        msg = msg_struct.DeviceQry.from_bytes(msg_bytes)
 
         dvcname = msg.device
         if dvcname == "" :
@@ -179,7 +179,7 @@ class ModbusDevice(Component):
                 self.logger.warn(f"ModbusDevice::handleActivate() Cannot create threads, RIAPS::modbus_cmd_port is not defined!")
 
         # post a startup event showing the device is active 
-        evt = device_capnp.DeviceEvent.new_message()
+        evt = msg_struct.DeviceEvent.new_message()
         evt.event = "ACTIVE"
         evt.command = "STARTUP"
         evt.values = [ 0.0 ]      
