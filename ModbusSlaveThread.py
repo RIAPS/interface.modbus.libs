@@ -100,7 +100,7 @@ class ModbusPoller( threading.Thread ) :
         return resp_dict
 
     def run(self):
-        self.logger.info( f"Modbus poller {self.device_name} thread started" ) 
+        self.logger.info( f"Modbus poller {self.device_name} thread started..." ) 
         self.plug = self.eventport.setupPlug(self)
         self.poller = zmq.Poller()
         self.poller.register( self.plug, zmq.POLLIN )
@@ -156,6 +156,7 @@ class ModbusPoller( threading.Thread ) :
                         evtmsg.error = 0
                         evtmsg.et = (stop-start).total_seconds()
                         self.plug.send_pyobj( evtmsg )
+        self.logger.info( f"Modbus slave poller for {self.device_name} exited." )
 
 # Class that communicates with a Modbus-TCP device
 class ModbusSlave(threading.Thread):
@@ -452,10 +453,6 @@ class ModbusSlave(threading.Thread):
         self.poller = zmq.Poller()
         self.poller.register( self.plug, zmq.POLLIN )
         if not self.ModbusConfigError :
-            #if a polling thread was configured start it now
-            if self.polling_thread != None :
-                self.polling_thread.start()
-
             while self.active.is_set() :
                 s = dict( self.poller.poll( 1000.0 ) )
                 if not self.dormant.is_set() :
@@ -510,13 +507,13 @@ class ModbusSlave(threading.Thread):
                 else:
                     self.logger.info( f"Device is dormant, ignoring commands!" )
 
-            if self.polling_thread != None :
-                self.polling_thread.deactivate()
-                self.polling_thread.join( 5.0 )
-                if self.polling_thread.is_alive() :
-                    self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
-                else:
-                    self.logger.info( f"Modbus slave {self.get_device_name()} polling thread exited normally." )     
+            # if self.polling_thread != None :
+            #     self.polling_thread.deactivate()
+            #     self.polling_thread.join( 5.0 )
+            #     if self.polling_thread.is_alive() :
+            #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
+            #     else:
+            #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread exited normally." )     
                                              
             self.logger.info( f"Modbus slave {self.get_device_name()} thread exited." ) 
         else:
