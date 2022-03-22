@@ -173,6 +173,10 @@ class ModbusDevice(Component):
                     dn = device_thread.get_device_name()    
                     self.devices[dn] = device_thread 
                     self.devices[dn].start()
+                    #if a polling thread was configured start it now
+                    if self.devices[dn].polling_thread != None :
+                        self.devices[dn].polling_thread.start()
+
                     while self.devices[dn].get_plug() == None :
                         time.sleep( 0.1 )
             except AttributeError :
@@ -213,13 +217,26 @@ class ModbusDevice(Component):
 
     # Clean up and shutdown 
     def __destroy__(self):
-        keys = list( self.devices.keys() )
-        for k in keys:
-            thd = self.devices[k]
+        for d in self.devices:
+            thd = self.devices[d]
+            self.logger.info(f"Deactivating thread {thd.device_name}...")
+            if thd.polling_thread != None :
+                thd.polling_thread.deactivate()
             thd.deactivate()
-            thd.join( timeout=10.0 )
+            time.sleep( 0.1 )
+
+        for d in self.devices:
+            thd = self.devices[d]
+            if thd.polling_thread != None :
+                if thd.polling_thread.is_alive() :
+                    thd.polling_thread.join( timeout=5.0 )
+                    if thd.polling_thread.is_alive() :
+                        self.logger.warn( f"Failed to terminate polling thread!" )
+
             if thd.is_alive() :
-                self.logger.warn( f"Failed to terminate thread!" )
+                thd.join( timeout=5.0 )
+                if thd.is_alive() :
+                    self.logger.warn( f"Failed to terminate thread!" )
 
         self.logger.info(f"ModbusDevice::__destroy__() complete")
  
