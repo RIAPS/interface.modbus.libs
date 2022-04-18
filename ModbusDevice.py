@@ -156,7 +156,7 @@ class ModbusDevice(Component):
                 self.modbus_evt_port
             except AttributeError :
                 # if not defined then create the attribute and set it to none
-                self.on_modbus_evt_port = None
+                self.modbus_evt_port = None
                 self.logger.warn(f"ModbusDevice::handleActivate() RIAP::modbus_evt_port is not defined!")
 
             #create the device threads and poller threads if needed
