@@ -1,21 +1,14 @@
-import time
-import yaml
-import os
-import struct
-import can
 import threading
-import queue
 import zmq
-import time
 import datetime as dt
 from modbus_tk import modbus_rtu
 from modbus_tk import modbus_tcp
 import modbus_tk.defines as cst
-from libs.ModbusSystemSettings import ModbusSystem
-import libs.helper as tc
 import serial
 import spdlog
 import libs.device_capnp as msg_struct
+import libs.helper as tc
+from libs.ModbusSystemSettings import ModbusSystem
 
 
 # Class derived from Thread to handle polling
