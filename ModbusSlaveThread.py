@@ -1,4 +1,5 @@
 import threading
+from rx import throw
 import zmq
 import datetime as dt
 from modbus_tk import modbus_rtu
@@ -108,6 +109,7 @@ class ModbusPoller( threading.Thread ) :
                 break
             else:  # do polling 
                 start = dt.datetime.now()
+                poll_error = 0
                 for k in self.param_keys :
                     cmdlist = self.params[k]
                     function_code = getattr(cst, cmdlist[0])
@@ -119,23 +121,29 @@ class ModbusPoller( threading.Thread ) :
                     max_thr = cmdlist[6]
                     min_thr = cmdlist[7]
 
-                    #read the parameter from the Modbus device           
-                    response = list( self.master.execute(   self.slave,
-                                                            function_code,
-                                                            starting_address,
-                                                            quantity_of_x=length,
-                                                            data_format=data_fmt ) )
-
                     PostNewEvent = True
 
-                    if len( response ) == 1:
-                        response[0] = response[0] * scale
-                        if max_thr != None and min_thr != None :
-                            if max_thr >= response[0] and min_thr <= response[0] :
-                                PostNewEvent = False
-                    else:
-                        for idx, n in response :
-                            response[idx] = float(n)    
+                    try:
+                        #read the parameter from the Modbus device           
+                        response = list( self.master.execute(   self.slave,
+                                                                function_code,
+                                                                starting_address,
+                                                                quantity_of_x=length,
+                                                                data_format=data_fmt ) )
+                    
+
+                        if len( response ) == 1:
+                            response[0] = response[0] * scale
+                            if max_thr != None and min_thr != None :
+                                if max_thr >= response[0] and min_thr <= response[0] :
+                                    PostNewEvent = False
+                        else:
+                            for idx, n in response :
+                                response[idx] = float(n)    
+                    except Exception as ex:
+                        poll_error = ModbusSystem.Errors.CommError
+                        response = [float(poll_error),]
+                        units = "error"
 
                     stop = dt.datetime.now()
                     if PostNewEvent == True :
@@ -146,7 +154,7 @@ class ModbusPoller( threading.Thread ) :
                         evtmsg.values = list( response )
                         evtmsg.units = list( [ units, ] )
                         evtmsg.device = self.device_name
-                        evtmsg.error = 0
+                        evtmsg.error = poll_error
                         evtmsg.et = (stop-start).total_seconds()
                         self.plug.send_pyobj( evtmsg )
         self.logger.info( f"Modbus slave poller for {self.device_name} exited." )
@@ -337,33 +345,39 @@ class ModbusSlave(threading.Thread):
         if self.debugMode :
             t1 = dt.datetime.now()
             self.logger.info( f"Reading: starting_address={starting_address}, quantity_of_x={length}, timestamp={t1}" )
-        
-        response = list( self.master.execute( self.slave,
-                                        getattr(cst, function_code),
-                                        starting_address,
-                                        quantity_of_x=length,
-                                        data_format=data_fmt ) )
-        
-        if self.debugMode :
-            t1 = dt.datetime.now()
-            self.logger.info( f"Response: starting_address={starting_address}, response={response}, timestamp={t1}" )
 
         values = []
-        for v in response:
-            if bit != -1:
-                temp = bool(int(v) & self.set_bit(0, bit))
-                if temp :
-                    values.append( 1.0 )
-                else:
-                    values.append( 0.0 )
-                if self.debugMode :
+
+        try:        
+            response = list( self.master.execute( self.slave,
+                                            getattr(cst, function_code),
+                                            starting_address,
+                                            quantity_of_x=length,
+                                            data_format=data_fmt ) )
+        
+            if self.debugMode :
+                t1 = dt.datetime.now()
+                self.logger.info( f"Response: starting_address={starting_address}, response={response}, timestamp={t1}" )
+
+            for v in response:
+                if bit != -1:
+                    temp = bool(int(v) & self.set_bit(0, bit))
                     if temp :
-                        temp = "Set"
+                        values.append( 1.0 )
                     else:
-                        temp = "Clear"
-                    self.logger.info( f"{tc.Yellow}Bit Read: command={command}, register value={v}, target bit={bit}, result={temp}{tc.RESET}" )
-            else:
-                values.append( float( v * scaler ) )
+                        values.append( 0.0 )
+                    if self.debugMode :
+                        if temp :
+                            temp = "Set"
+                        else:
+                            temp = "Clear"
+                        self.logger.info( f"{tc.Yellow}Bit Read: command={command}, register value={v}, target bit={bit}, result={temp}{tc.RESET}" )
+                else:
+                    values.append( float( v * scaler ) )
+        except Exception as ex:
+            if self.debugMode :
+                self.logger.info( f"Modbus command({command}) error={ex})" )
+            units = "error"
  
         results = { "command" : command, "values" : values, "units" : units }
 
@@ -373,6 +387,7 @@ class ModbusSlave(threading.Thread):
         return results
 
     def write_modbus(self, command, values ):
+        bit_read_error = False
         results = {}
         modbus_func = self.dvc[ command ]
         # read Modbus command parameters from cofiguration
@@ -385,11 +400,14 @@ class ModbusSlave(threading.Thread):
             bit = int( modbus_func["bit_position"] )
             cmd = command.replace("WRITE", "READ" )
             data = self.read_modbus( cmd, ignore_bit=True )
-            temp = int( data["values"][0] )
-            if values[0] == 0:
-                values[0] = float( self.clr_bit( temp, bit ) )
+            if len( data["values"] ) > 0 :
+                temp = int( data["values"][0] )
+                if values[0] == 0:
+                    values[0] = float( self.clr_bit( temp, bit ) )
+                else:
+                    values[0] = float( self.set_bit( temp, bit ) )
             else:
-                values[0] = float( self.set_bit( temp, bit ) )
+                bit_read_error = True
         else:
             scaler = modbus_func['Units'][0]
             units = modbus_func['Units'][1]
@@ -409,14 +427,27 @@ class ModbusSlave(threading.Thread):
         if self.debugMode :
             self.logger.info( f"values={values}, length={length}, modbus values = {modbus_value}" )
 
-        modbus_response = self.master.execute( self.slave,
-                                        getattr(cst, function_code),
-                                        starting_address,
-                                        output_value=modbus_value,
-                                        quantity_of_x=length,
-                                        data_format=data_fmt )
+        if not bit_read_error :
+            try:
+                    modbus_response = self.master.execute( self.slave,
+                                                    getattr(cst, function_code),
+                                                    starting_address,
+                                                    output_value=modbus_value,
+                                                    quantity_of_x=length,
+                                                    data_format=data_fmt )
 
-        response = list( modbus_response )
+                    response = list( modbus_response )
+            except Exception as ex:
+                if self.debugMode :
+                    self.logger.info( f"Modbus command({cmd}) write error={ex})" )
+                response = []
+                units = "error"
+        else:
+            if self.debugMode :
+                self.logger.info( f"Modbus command({cmd}) bit read error={ex})" )
+            response = []
+            units = "error"
+
         if self.debugMode :
             self.logger.info( f"modbus reply = {response}" )
         # if the write is successful the result is:
@@ -475,8 +506,15 @@ class ModbusSlave(threading.Thread):
                                 self.logger.info( f"ModbusSlaveThread {self.get_device_name()} results={response}" ) 
                             
                             results.append( response )
+
                             if len( response["values"] ) == 0:
-                                ansmsg.error = ModbusSystem.Errors.InvalidOperation 
+                                if response["units"] == "error" :
+                                    ansmsg.error = ModbusSystem.Errors.CommError
+                                else:
+                                    ansmsg.error = ModbusSystem.Errors.InvalidOperation
+                                response["values"] = [float(ansmsg.error)]
+                            else:
+                                pass
 
 
                         vals = []
