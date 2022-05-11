@@ -11,6 +11,7 @@ class ModbusSystem:
         AppPollExit = -2
         CommError = -3
         PollTimerOverrun = -4
+        InvalidOperation = -5
     class Debugging:
         Verbose = True      # modbus communication informational message level
         Diagnostics = False
