@@ -1,5 +1,4 @@
 import threading
-from rx import throw
 import zmq
 import datetime as dt
 from modbus_tk import modbus_rtu
@@ -321,65 +320,69 @@ class ModbusSlave(threading.Thread):
         self.logger.info( f"Modbus Slave [{self.device_name}] debugMode is set to [{self.debugMode}]" )
 
     def read_modbus(self, command, ignore_bit=False ):
-        modbus_func = self.dvc[ command ]
-        # read Modbus command parameters from yaml file
-        function_code = modbus_func['function']
-        starting_address = modbus_func['start']
-        length = modbus_func['length']
-        bit = int(-1)
-        if "bit_position" in modbus_func:
-            if not ignore_bit : 
-                bit = int( modbus_func["bit_position"] )
-            units = "None"
-            scaler = 1.0
-        else:
-            scaler = float(modbus_func['Units'][0])
-            units = modbus_func['Units'][1]
-        # scale value per yaml file and convert to int to send to Modbus slave
+        try:
+            modbus_func = self.dvc[ command ]
+            # read Modbus command parameters from yaml file
+            function_code = modbus_func['function']
+            starting_address = modbus_func['start']
+            length = modbus_func['length']
+            bit = int(-1)
+            if "bit_position" in modbus_func:
+                if not ignore_bit : 
+                    bit = int( modbus_func["bit_position"] )
+                units = "None"
+                scaler = 1.0
+            else:
+                scaler = float(modbus_func['Units'][0])
+                units = modbus_func['Units'][1]
+            # scale value per yaml file and convert to int to send to Modbus slave
 
-        if 'data_format' in modbus_func:
-            data_fmt = modbus_func['data_format']
-        else:
-            data_fmt = ''
+            if 'data_format' in modbus_func:
+                data_fmt = modbus_func['data_format']
+            else:
+                data_fmt = ''
 
-        if self.debugMode :
-            t1 = dt.datetime.now()
-            self.logger.info( f"Reading: starting_address={starting_address}, quantity_of_x={length}, timestamp={t1}" )
-
-        values = []
-
-        try:        
-            response = list( self.master.execute( self.slave,
-                                            getattr(cst, function_code),
-                                            starting_address,
-                                            quantity_of_x=length,
-                                            data_format=data_fmt ) )
-        
             if self.debugMode :
                 t1 = dt.datetime.now()
-                self.logger.info( f"Response: starting_address={starting_address}, response={response}, timestamp={t1}" )
+                self.logger.info( f"Reading: starting_address={starting_address}, quantity_of_x={length}, timestamp={t1}" )
 
-            for v in response:
-                if bit != -1:
-                    temp = bool(int(v) & self.set_bit(0, bit))
-                    if temp :
-                        values.append( 1.0 )
-                    else:
-                        values.append( 0.0 )
-                    if self.debugMode :
+            values = []
+
+            try:        
+                response = list( self.master.execute( self.slave,
+                                                getattr(cst, function_code),
+                                                starting_address,
+                                                quantity_of_x=length,
+                                                data_format=data_fmt ) )
+            
+                if self.debugMode :
+                    t1 = dt.datetime.now()
+                    self.logger.info( f"Response: starting_address={starting_address}, response={response}, timestamp={t1}" )
+
+                for v in response:
+                    if bit != -1:
+                        temp = bool(int(v) & self.set_bit(0, bit))
                         if temp :
-                            temp = "Set"
+                            values.append( 1.0 )
                         else:
-                            temp = "Clear"
-                        self.logger.info( f"{tc.Yellow}Bit Read: command={command}, register value={v}, target bit={bit}, result={temp}{tc.RESET}" )
-                else:
-                    values.append( float( v * scaler ) )
-        except Exception as ex:
-            if self.debugMode :
-                self.logger.info( f"Modbus command({command}) error={ex})" )
-            units = "error"
- 
-        results = { "command" : command, "values" : values, "units" : units }
+                            values.append( 0.0 )
+                        if self.debugMode :
+                            if temp :
+                                temp = "Set"
+                            else:
+                                temp = "Clear"
+                            self.logger.info( f"{tc.Yellow}Bit Read: command={command}, register value={v}, target bit={bit}, result={temp}{tc.RESET}" )
+                    else:
+                        values.append( float( v * scaler ) )
+            except Exception as ex:
+                if self.debugMode :
+                    self.logger.info( f"Modbus command({command}) error={ex})" )
+                units = "error"
+    
+            results = { "command" : command, "values" : values, "units" : units }
+        except KeyError:
+            units = "None"
+            results = { "command" : command, "values" : [], "units" : units }
 
         if self.debugMode :
             self.logger.info( f"Return values: {results}" )
@@ -389,74 +392,78 @@ class ModbusSlave(threading.Thread):
     def write_modbus(self, command, values ):
         bit_read_error = False
         results = {}
-        modbus_func = self.dvc[ command ]
-        # read Modbus command parameters from cofiguration
-        function_code = modbus_func['function']
-        starting_address = modbus_func['start']
-        length = modbus_func['length']
-        if "bit_position" in modbus_func:
-            units = "None"
-            scaler = 1
-            bit = int( modbus_func["bit_position"] )
-            cmd = command.replace("WRITE", "READ" )
-            data = self.read_modbus( cmd, ignore_bit=True )
-            if len( data["values"] ) > 0 :
-                temp = int( data["values"][0] )
-                if values[0] == 0:
-                    values[0] = float( self.clr_bit( temp, bit ) )
+        try:
+            modbus_func = self.dvc[ command ]
+            # read Modbus command parameters from cofiguration
+            function_code = modbus_func['function']
+            starting_address = modbus_func['start']
+            length = modbus_func['length']
+            if "bit_position" in modbus_func:
+                units = "None"
+                scaler = 1
+                bit = int( modbus_func["bit_position"] )
+                cmd = command.replace("WRITE", "READ" )
+                data = self.read_modbus( cmd, ignore_bit=True )
+                if len( data["values"] ) > 0 :
+                    temp = int( data["values"][0] )
+                    if values[0] == 0:
+                        values[0] = float( self.clr_bit( temp, bit ) )
+                    else:
+                        values[0] = float( self.set_bit( temp, bit ) )
                 else:
-                    values[0] = float( self.set_bit( temp, bit ) )
+                    bit_read_error = True
             else:
-                bit_read_error = True
-        else:
-            scaler = modbus_func['Units'][0]
-            units = modbus_func['Units'][1]
- 
-        if 'data_format' in modbus_func:
-            data_fmt = modbus_func['data_format']
-        else:
-            data_fmt = ""
+                scaler = modbus_func['Units'][0]
+                units = modbus_func['Units'][1]
+    
+            if 'data_format' in modbus_func:
+                data_fmt = modbus_func['data_format']
+            else:
+                data_fmt = ""
 
-        if data_fmt == "" :
-            modbus_value = []
-            for v in values:
-                modbus_value.append( int( v / scaler ) )        
-        else:
-            modbus_value = values       
+            if data_fmt == "" :
+                modbus_value = []
+                for v in values:
+                    modbus_value.append( int( v / scaler ) )        
+            else:
+                modbus_value = values       
 
-        if self.debugMode :
-            self.logger.info( f"values={values}, length={length}, modbus values = {modbus_value}" )
+            if self.debugMode :
+                self.logger.info( f"values={values}, length={length}, modbus values = {modbus_value}" )
 
-        if not bit_read_error :
-            try:
-                    modbus_response = self.master.execute( self.slave,
-                                                    getattr(cst, function_code),
-                                                    starting_address,
-                                                    output_value=modbus_value,
-                                                    quantity_of_x=length,
-                                                    data_format=data_fmt )
+            if not bit_read_error :
+                try:
+                        modbus_response = self.master.execute( self.slave,
+                                                        getattr(cst, function_code),
+                                                        starting_address,
+                                                        output_value=modbus_value,
+                                                        quantity_of_x=length,
+                                                        data_format=data_fmt )
 
-                    response = list( modbus_response )
-            except Exception as ex:
+                        response = list( modbus_response )
+                except Exception as ex:
+                    if self.debugMode :
+                        self.logger.info( f"Modbus command({cmd}) write error={ex})" )
+                    response = []
+                    units = "error"
+            else:
                 if self.debugMode :
-                    self.logger.info( f"Modbus command({cmd}) write error={ex})" )
+                    self.logger.info( f"Modbus command({cmd}) bit read error={ex})" )
                 response = []
                 units = "error"
-        else:
-            if self.debugMode :
-                self.logger.info( f"Modbus command({cmd}) bit read error={ex})" )
-            response = []
-            units = "error"
 
-        if self.debugMode :
-            self.logger.info( f"modbus reply = {response}" )
-        # if the write is successful the result is:
-        # [ (starting address), (number of registers written) ]
-        if len( response ) == 2 :
-            if response[0] == starting_address :
-                if response[1] == length :
-                    results = { "command" : command, "values" : values, "units" : units }
-        else:
+            if self.debugMode :
+                self.logger.info( f"modbus reply = {response}" )
+            # if the write is successful the result is:
+            # [ (starting address), (number of registers written) ]
+            if len( response ) == 2 :
+                if response[0] == starting_address :
+                    if response[1] == length :
+                        results = { "command" : command, "values" : values, "units" : units }
+            else:
+                results = { "command" : command, "values" : [], "units" : units }
+        except KeyError:
+            units = "None"
             results = { "command" : command, "values" : [], "units" : units }
 
         return results
