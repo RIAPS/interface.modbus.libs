@@ -141,7 +141,7 @@ class ModbusPoller( threading.Thread ) :
                                 response[idx] = float(n)    
                     except Exception as ex:
                         poll_error = ModbusSystem.Errors.CommError
-                        response = [float(poll_error),]
+                        response = [ModbusSystem.DataRanges.MIN_FLT32,]
                         units = "error"
 
                     stop = dt.datetime.now()
@@ -381,7 +381,7 @@ class ModbusSlave(threading.Thread):
     
             results = { "command" : command, "values" : values, "units" : units }
         except KeyError:
-            units = "None"
+            units = "Unknown"
             results = { "command" : command, "values" : [], "units" : units }
 
         if self.debugMode :
@@ -463,7 +463,7 @@ class ModbusSlave(threading.Thread):
             else:
                 results = { "command" : command, "values" : [], "units" : units }
         except KeyError:
-            units = "None"
+            units = "Unknown"
             results = { "command" : command, "values" : [], "units" : units }
 
         return results
@@ -519,7 +519,7 @@ class ModbusSlave(threading.Thread):
                                     ansmsg.error = ModbusSystem.Errors.CommError
                                 else:
                                     ansmsg.error = ModbusSystem.Errors.InvalidOperation
-                                response["values"] = [float(ansmsg.error)]
+                                response["values"] = [ModbusSystem.DataRanges.MIN_FLT32]
                             else:
                                 pass
 
