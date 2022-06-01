@@ -23,7 +23,7 @@
 
     To add this to the TestModbusOpal sub project in the interface.modbus.apps repository:
 
-    git.exe submodule add   -- "https://github.com/RIAPS/interface.modbus.libs.git" "Python/TestModbusOpal/libs"
+    git.exe submodule add   -- "https://github.com/RIAPS/interface.modbus.libs.git" "Python/TestModbusOpal/modbuslibs"
 
-    This will create a new folder named 'libs' and copy the Modbus library files.
+    This will create a new folder named 'modbuslibs' and copy the Modbus library files.
 
