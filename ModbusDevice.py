@@ -9,10 +9,10 @@ import spdlog
 import capnp
 import os
 import datetime
-import libs.device_capnp as msg_struct
-import libs.helper as helper
-from libs.ModbusSystemSettings import ModbusSystem
-from libs.ModbusSlaveThread import ModbusSlave
+import modbuslibs.device_capnp as msg_struct
+import modbuslibs.helper as helper
+from modbuslibs.ModbusSystemSettings import ModbusSystem
+from modbuslibs.ModbusSlaveThread import ModbusSlave
 
 
 
