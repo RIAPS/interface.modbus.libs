@@ -6,9 +6,9 @@ from modbus_tk import modbus_tcp
 import modbus_tk.defines as cst
 import serial
 import spdlog
-import modbuslibs.device_capnp as msg_struct
-import modbuslibs.helper as tc
-from modbuslibs.ModbusSystemSettings import ModbusSystem
+import libs.device_capnp as msg_struct
+import libs.helper as tc
+from libs.ModbusSystemSettings import ModbusSystem
 
 
 # Class derived from Thread to handle polling
@@ -218,7 +218,7 @@ class ModbusSlave(threading.Thread):
                                                                             stopbits=self.dvc[comname]['stopbits'],
                                                                             xonxoff=self.dvc[comname]['xonxoff'])   )
 
-                        self.master.set_timeout(ModbusSystem.Timeouts.TTYSComm)
+                        self.master.set_timeout((ModbusSystem.Timeouts.TTYSComm/1000.0), use_sw_timeout=True)
                         self.master.set_verbose(ModbusSystem.Debugging.Verbose)
                         self.logger.info( 'Modbus RTU Connected to Slave [{0}] on Port [{1}]'.format( self.slave, self.device ) )
                     except Exception as ex:
@@ -232,7 +232,7 @@ class ModbusSlave(threading.Thread):
                     try:
                         self.device = "TCP"
                         self.master = modbus_tcp.TcpMaster(addr, port)
-                        self.master.set_timeout(ModbusSystem.Timeouts.TCPComm)
+                        self.master.set_timeout((ModbusSystem.Timeouts.TCPComm/1000.0) )
                         self.master.set_verbose(ModbusSystem.Debugging.Verbose)
                         self.logger.info( 'Modbus TCP Connected to Slave [{0}] on Address [{1}:{2}]'.format( self.slave, addr, port ) )
                     except Exception as ex:
@@ -443,12 +443,12 @@ class ModbusSlave(threading.Thread):
                         response = list( modbus_response )
                 except Exception as ex:
                     if self.debugMode :
-                        self.logger.info( f"Modbus command({cmd}) write error={ex})" )
+                        self.logger.info( f"Modbus command({command}) write error={ex})" )
                     response = []
                     units = "error"
             else:
                 if self.debugMode :
-                    self.logger.info( f"Modbus command({cmd}) bit read error={ex})" )
+                    self.logger.info( f"Modbus command({command}) bit read/modify/write error)" )
                 response = []
                 units = "error"
 

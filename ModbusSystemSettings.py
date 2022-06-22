@@ -4,7 +4,7 @@
 class ModbusSystem:
     class Timeouts:
         TCPComm = 2000      # milliseconds
-        TTYSComm = 2000     # milliseconds
+        TTYSComm = 100      # milliseconds
         RetriesTCP = -1        
         RetriesTTYS = -1     
     class Errors:
