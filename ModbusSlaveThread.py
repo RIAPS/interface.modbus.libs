@@ -6,9 +6,9 @@ from modbus_tk import modbus_tcp
 import modbus_tk.defines as cst
 import serial
 import spdlog
-import libs.device_capnp as msg_struct
-import libs.helper as tc
-from libs.ModbusSystemSettings import ModbusSystem
+import modbuslibs.device_capnp as msg_struct
+import modbuslibs.helper as tc
+from modbuslibs.ModbusSystemSettings import ModbusSystem
 
 
 # Class derived from Thread to handle polling
