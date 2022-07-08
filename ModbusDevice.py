@@ -109,6 +109,7 @@ class ModbusDevice(Component):
         ansmsg.operation = msg.operation
         ansmsg.params = list(msg.params)
         ansmsg.values = list(msg.values)
+        ansmsg.units = list(msg.units)
         ansmsg.msgcounter = msg.msgcounter    
         msgbytes =  ansmsg.to_bytes()
         self.device_port.send( msgbytes )
