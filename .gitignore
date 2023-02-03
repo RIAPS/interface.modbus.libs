@@ -1,3 +1,12 @@
+build/
+development/
+.idea
 .vs/slnx.sqlite
 .vs/ProjectSettings.json
 /.vs
+__pycache__
+*.egg-info
+riaps.key
+riaps.yaml
+riaps-app.cert
+ModbusApp.json

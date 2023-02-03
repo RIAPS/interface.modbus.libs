@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[project]
+name = "riaps-interfaces-modbus"
+version = "0.1.0"
+authors = [
+  { name="RIAPS"},
+]
+description = "A riaps interface library for modbus"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Linux",
+]
+dependencies = [
+    "modbus_tk",
+    "riaps-pycom"
+]
+
+[project.optional-dependencies]
+dev = [
+    "watchdog",
+    "pytest"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/RIAPS/interface.modbus.libs"
+"Bug Tracker" = "https://github.com/RIAPS/interface.modbus.libs/issues"
