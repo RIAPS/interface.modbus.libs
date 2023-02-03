@@ -10,6 +10,7 @@ import capnp
 import riaps.interfaces.modbus.device_capnp as msg_schema
 import riaps.interfaces.modbus.TerminalColors as tc
 from riaps.interfaces.modbus.ModbusSystemSettings import ModbusSystem
+from riaps.interfaces.modbus.ModbusPoller import ModbusPoller
 
 
 # Class that communicates with a Modbus-TCP device

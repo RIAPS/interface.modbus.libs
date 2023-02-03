@@ -1,5 +1,11 @@
+import datetime as dt
 import logging
+import modbus_tk.defines as cst
 import threading
+import zmq
+
+from riaps.interfaces.modbus.ModbusSystemSettings import ModbusSystem
+import riaps.interfaces.modbus.device_capnp as msg_schema
 
 
 # Class derived from Thread to handle polling
@@ -148,7 +154,7 @@ class ModbusPoller(threading.Thread):
 
                     stop = dt.datetime.now()
                     if PostNewEvent == True:
-                        evtmsg = msg_struct.DeviceEvent.new_message()
+                        evtmsg = msg_schema.DeviceEvent.new_message()
                         evtmsg.event = "POLLED"
                         evtmsg.command = "READ"
                         evtmsg.names = list([k, ])
