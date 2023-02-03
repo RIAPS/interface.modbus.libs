@@ -39,8 +39,10 @@ class ModbusSlave(threading.Thread):
         try:
             self.device_name = list(config.keys())[0]
             self.dvc = config[self.device_name]
+            self.ModbusConfigError = False  # TODO: probably remove this once things are cleaner.
         except KeyError as kex:
             self.logger.info(f"Modbus device configuration error: {kex}")
+            self.ModbusConfigError = True
             return
 
         try:  # handle dictionary key errors
@@ -337,79 +339,81 @@ class ModbusSlave(threading.Thread):
         self.plug = self.deviceport.setupPlug(self)
         self.poller = zmq.Poller()
         self.poller.register(self.plug, zmq.POLLIN)
-        if not self.ModbusConfigError:
-            while self.active.is_set():
-                s = dict(self.poller.poll(1000.0))
-                if not self.dormant.is_set():
-                    if len(s) > 0:
-                        msg = self.plug.recv_pyobj()
-                        results = []
-                        ansmsg = msg_schema.DeviceAns.new_message()
-                        ansmsg.error = 0
-                        for idx, p in enumerate(msg.params):
-                            cmd = f"{p}_{msg.operation}"
-                            if self.debugMode:
-                                self.logger.info(f"ModbusSlaveThread {self.get_device_name()} message request={cmd}")
-                            if msg.operation == "READ":
-                                response = self.read_modbus(cmd)
-                            elif msg.operation == "WRITE":
-                                if len(msg.params) == len(msg.values):
-                                    values = [msg.values[idx], ]
-                                else:
-                                    values = None
-                                    self.logger.warn(
-                                        f"ModbusSlaveThread {self.get_device_name()} block write not implemented={cmd}")
-                                if values != None:
-                                    response = self.write_modbus(cmd, values)
-                            else:
-                                response = {}
 
-                            if self.debugMode:
-                                self.logger.info(f"ModbusSlaveThread {self.get_device_name()} results={response}")
-
-                            results.append(response)
-
-                            if len(response["values"]) == 0:
-                                if response["units"] == "error":
-                                    ansmsg.error = ModbusSystem.Errors.CommError
-                                else:
-                                    ansmsg.error = ModbusSystem.Errors.InvalidOperation
-                                response["values"] = [ModbusSystem.DataRanges.MIN_FLT32]
-                            else:
-                                pass
-
-                        vals = []
-                        units = []
-                        parms = []
-                        for d in results:
-                            vals.append(d["values"][0])
-                            units.append(d["units"])
-                            parms.append(d["command"])
-                        if self.debugMode:
-                            self.logger.info(f"{self.get_device_name()} vals={vals}")
-                            self.logger.info(f"{self.get_device_name()} units={units}")
-                            self.logger.info(f"{self.get_device_name()} parms={parms}")
-                        ansmsg.values = list(vals)
-                        ansmsg.units = list(units)
-                        ansmsg.params = list(parms)
-                        ansmsg.device = self.get_device_name()
-                        ansmsg.operation = msg.operation
-                        ansmsg.msgcounter = msg.msgcounter
-                        self.plug.send_pyobj(ansmsg)
-                else:
-                    self.logger.info(f"Device is dormant, ignoring commands!")
-
-            # if self.polling_thread != None :
-            #     self.polling_thread.deactivate()
-            #     self.polling_thread.join( 5.0 )
-            #     if self.polling_thread.is_alive() :
-            #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
-            #     else:
-            #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread exited normally." )     
-
-            self.logger.info(f"Modbus slave {self.get_device_name()} thread exited.")
-        else:
+        if self.ModbusConfigError:
             self.logger.info(f"Modbus slave {self.get_device_name()} thread exited due to configuration errors!")
+            return
+
+        while self.active.is_set():
+            s = dict(self.poller.poll(1000.0))
+            if not self.dormant.is_set():
+                if len(s) > 0:
+                    msg = self.plug.recv_pyobj()
+                    results = []
+                    ansmsg = msg_schema.DeviceAns.new_message()
+                    ansmsg.error = 0
+                    for idx, p in enumerate(msg.params):
+                        cmd = f"{p}_{msg.operation}"
+                        if self.debugMode:
+                            self.logger.info(f"ModbusSlaveThread {self.get_device_name()} message request={cmd}")
+                        if msg.operation == "READ":
+                            response = self.read_modbus(cmd)
+                        elif msg.operation == "WRITE":
+                            if len(msg.params) == len(msg.values):
+                                values = [msg.values[idx], ]
+                            else:
+                                values = None
+                                self.logger.warn(
+                                    f"ModbusSlaveThread {self.get_device_name()} block write not implemented={cmd}")
+                            if values != None:
+                                response = self.write_modbus(cmd, values)
+                        else:
+                            response = {}
+
+                        if self.debugMode:
+                            self.logger.info(f"ModbusSlaveThread {self.get_device_name()} results={response}")
+
+                        results.append(response)
+
+                        if len(response["values"]) == 0:
+                            if response["units"] == "error":
+                                ansmsg.error = ModbusSystem.Errors.CommError
+                            else:
+                                ansmsg.error = ModbusSystem.Errors.InvalidOperation
+                            response["values"] = [ModbusSystem.DataRanges.MIN_FLT32]
+                        else:
+                            pass
+
+                    vals = []
+                    units = []
+                    parms = []
+                    for d in results:
+                        vals.append(d["values"][0])
+                        units.append(d["units"])
+                        parms.append(d["command"])
+                    if self.debugMode:
+                        self.logger.info(f"{self.get_device_name()} vals={vals}")
+                        self.logger.info(f"{self.get_device_name()} units={units}")
+                        self.logger.info(f"{self.get_device_name()} parms={parms}")
+                    ansmsg.values = list(vals)
+                    ansmsg.units = list(units)
+                    ansmsg.params = list(parms)
+                    ansmsg.device = self.get_device_name()
+                    ansmsg.operation = msg.operation
+                    ansmsg.msgcounter = msg.msgcounter
+                    self.plug.send_pyobj(ansmsg)
+            else:
+                self.logger.info(f"Device is dormant, ignoring commands!")
+
+        # if self.polling_thread != None :
+        #     self.polling_thread.deactivate()
+        #     self.polling_thread.join( 5.0 )
+        #     if self.polling_thread.is_alive() :
+        #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
+        #     else:
+        #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread exited normally." )
+
+        self.logger.info(f"Modbus slave {self.get_device_name()} thread exited.")
 
 
 if __name__ == '__main__':
