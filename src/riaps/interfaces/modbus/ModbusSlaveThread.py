@@ -137,8 +137,7 @@ class ModbusSlave(threading.Thread):
                             self.logger.warn(
                                 f"Modbus poller parameters are either not configured or not present in configuration file.")
                         else:
-                            self.polling_thread = ModbusPoller(self.logger,
-                                                               self.device_name,
+                            self.polling_thread = ModbusPoller(self.device_name,
                                                                self.slave,
                                                                self.master,
                                                                self.poll_dict,
