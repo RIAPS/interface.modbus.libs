@@ -43,7 +43,7 @@ def test_cli():
     observer.start()
 
     if True:
-        required_clients = ['172.21.20.50']
+        required_clients = ['172.21.20.55']
         app_folder = "/home/riaps/projects/RIAPS/interface.modbus.libs/example"
         c.setAppFolder(app_folder)
         app_name = c.compileApplication("ModbusApp.riaps", app_folder)

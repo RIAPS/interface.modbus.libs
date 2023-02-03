@@ -7,7 +7,7 @@ import modbus_tk.defines as cst
 import serial
 import spdlog
 import capnp
-import device_capnp as msg_struct
+import riaps.interfaces.modbus.device_capnp as msg_schema
 import riaps.interfaces.modbus.TerminalColors as tc
 from riaps.interfaces.modbus.ModbusSystemSettings import ModbusSystem
 
@@ -349,7 +349,7 @@ class ModbusSlave(threading.Thread):
                     if len(s) > 0:
                         msg = self.plug.recv_pyobj()
                         results = []
-                        ansmsg = msg_struct.DeviceAns.new_message()
+                        ansmsg = msg_schema.DeviceAns.new_message()
                         ansmsg.error = 0
                         for idx, p in enumerate(msg.params):
                             cmd = f"{p}_{msg.operation}"

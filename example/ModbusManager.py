@@ -3,7 +3,8 @@ from statistics import mode
 from riaps.run.comp import Component
 import riaps.interfaces.modbus.TerminalColors as tc
 import spdlog
-from riaps.interfaces.modbus.msg import msg_schema
+import capnp
+import riaps.interfaces.modbus.device_capnp as msg_schema
 
 
 # riaps:keep_import:end
