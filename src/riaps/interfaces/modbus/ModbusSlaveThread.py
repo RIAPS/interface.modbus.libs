@@ -39,120 +39,115 @@ class ModbusSlave(threading.Thread):
         try:
             self.device_name = list(config.keys())[0]
             self.dvc = config[self.device_name]
-            self.ModbusConfigError = False
         except KeyError as kex:
             self.logger.info(f"Modbus device configuration error: {kex}")
-            self.ModbusConfigError = True
+            return
 
-        if not self.ModbusConfigError:
-            try:  # handle dictionary key errors
-                # set slave id. Argument required by modbus tk to send commands to Modbus
-                self.slave = self.dvc['Slave']
-                # set the polling interval
-                self.interval = self.dvc['Interval']
-                # set the debug mode for logging
-                self.debugMode = self.dvc["debugMode"]
-                # Start Modbus master
-                # if Serial is defined in config file then use serial communication
-                if 'RS232' in self.dvc:
-                    comname = 'RS232'
-                elif 'Serial' in self.dvc:
-                    comname = 'Serial'
-                elif 'TCP' in self.dvc:
-                    comname = 'TCP'
-                else:
-                    comname = ""
+        try:  # handle dictionary key errors
+            # set slave id. Argument required by modbus tk to send commands to Modbus
+            self.slave = self.dvc['Slave']
+            # set the polling interval
+            self.interval = self.dvc['Interval']
+            # set the debug mode for logging
+            self.debugMode = self.dvc["debugMode"]
+            # Start Modbus master
+            # if Serial is defined in config file then use serial communication
+            if 'RS232' in self.dvc:
+                comname = 'RS232'
+            elif 'Serial' in self.dvc:
+                comname = 'Serial'
+            elif 'TCP' in self.dvc:
+                comname = 'TCP'
+            else:
+                comname = ""
 
-                if comname == 'RS232' or comname == 'Serial':
-                    try:
-                        self.device = self.dvc[comname]['device']
-                        self.master = modbus_rtu.RtuMaster(serial.Serial(port=self.device,
-                                                                         baudrate=self.dvc[comname]['baudrate'],
-                                                                         bytesize=self.dvc[comname]['bytesize'],
-                                                                         parity=self.dvc[comname]['parity'],
-                                                                         stopbits=self.dvc[comname]['stopbits'],
-                                                                         xonxoff=self.dvc[comname]['xonxoff']))
+            if comname == 'RS232' or comname == 'Serial':
+                try:
+                    self.device = self.dvc[comname]['device']
+                    self.master = modbus_rtu.RtuMaster(serial.Serial(port=self.device,
+                                                                     baudrate=self.dvc[comname]['baudrate'],
+                                                                     bytesize=self.dvc[comname]['bytesize'],
+                                                                     parity=self.dvc[comname]['parity'],
+                                                                     stopbits=self.dvc[comname]['stopbits'],
+                                                                     xonxoff=self.dvc[comname]['xonxoff']))
 
-                        self.master.set_timeout((ModbusSystem.Timeouts.TTYSComm / 1000.0), use_sw_timeout=True)
-                        self.master.set_verbose(ModbusSystem.Debugging.Verbose)
-                        self.logger.info(
-                            'Modbus RTU Connected to Slave [{0}] on Port [{1}]'.format(self.slave, self.device))
-                    except Exception as ex:
-                        self.logger.info('Modbus RTU Creation Exception: {0}'.format(ex))
-                        self.master = None
-
-                elif comname == 'TCP':
-                    addr = self.dvc[comname]['Address']
-                    port = self.dvc[comname]['Port']
-
-                    try:
-                        self.device = "TCP"
-                        self.master = modbus_tcp.TcpMaster(addr, port)
-                        self.master.set_timeout((ModbusSystem.Timeouts.TCPComm / 1000.0))
-                        self.master.set_verbose(ModbusSystem.Debugging.Verbose)
-                        self.logger.info(
-                            'Modbus TCP Connected to Slave [{0}] on Address [{1}:{2}]'.format(self.slave, addr, port))
-                    except Exception as ex:
-                        self.logger.info(f"Modbus TCP Creation Exception: {ex}")
-                        self.master = None
-                else:
-                    self.logger.info(f"Modbus device has no communication configuration defined.")
+                    self.master.set_timeout((ModbusSystem.Timeouts.TTYSComm / 1000.0), use_sw_timeout=True)
+                    self.master.set_verbose(ModbusSystem.Debugging.Verbose)
+                    self.logger.info(
+                        'Modbus RTU Connected to Slave [{0}] on Port [{1}]'.format(self.slave, self.device))
+                except Exception as ex:
+                    self.logger.info('Modbus RTU Creation Exception: {0}'.format(ex))
                     self.master = None
 
-                if self.master != None:
-                    if self.eventport != None:
-                        if "poll" in list(self.dvc.keys()):
-                            if self.dvc["poll"]:
-                                for v in self.dvc["poll"]:
-                                    poll_func = self.dvc[v]
-                                    function_code = poll_func['function']
-                                    starting_address = poll_func['start']
-                                    length = poll_func['length']
-                                    scale = poll_func['Units'][0]
-                                    units = poll_func['Units'][1]
-                                    if 'data_format' in list(poll_func.keys()):
-                                        data_fmt = poll_func['data_format']
-                                    else:
-                                        data_fmt = ''
+            elif comname == 'TCP':
+                addr = self.dvc[comname]['Address']
+                port = self.dvc[comname]['Port']
 
-                                    if self.dvc["poll"][v]:
-                                        max_thr = self.dvc["poll"][v]["max"]
-                                        min_thr = self.dvc["poll"][v]["min"]
-                                    else:
-                                        max_thr = None
-                                        min_thr = None
+                try:
+                    self.device = "TCP"
+                    self.master = modbus_tcp.TcpMaster(addr, port)
+                    self.master.set_timeout((ModbusSystem.Timeouts.TCPComm / 1000.0))
+                    self.master.set_verbose(ModbusSystem.Debugging.Verbose)
+                    self.logger.info(
+                        'Modbus TCP Connected to Slave [{0}] on Address [{1}:{2}]'.format(self.slave, addr, port))
+                except Exception as ex:
+                    self.logger.info(f"Modbus TCP Creation Exception: {ex}")
+                    self.master = None
+            else:
+                self.logger.info(f"Modbus device has no communication configuration defined.")
+                self.master = None
 
-                                    self.poll_dict[v] = [function_code,
-                                                         starting_address,
-                                                         length,
-                                                         scale,
-                                                         units,
-                                                         data_fmt,
-                                                         max_thr,
-                                                         min_thr]
+            if self.master is None:
+                return
 
-                        # If there are parameters to poll then create a polling thread object 
-                        if len(self.poll_dict) == 0:
-                            self.logger.warn(f"Modbus poller will not be started!")
-                            self.logger.warn(
-                                f"Modbus poller parameters are either not configured or not present in configuration file.")
-                        else:
-                            self.polling_thread = ModbusPoller(self.device_name,
-                                                               self.slave,
-                                                               self.master,
-                                                               self.poll_dict,
-                                                               self.eventport,
-                                                               self.interval)
+            if self.eventport is None:
+                self.logger.info(f"Modbus poller has no RIAPS publish port defined.")
+                return
 
+            if self.dvc.get("poll"):  # If the 'poll' key is defined in the device configuration file.
+                for v in self.dvc["poll"]:
+                    poll_func = self.dvc[v]
+                    function_code = poll_func['function']
+                    starting_address = poll_func['start']
+                    length = poll_func['length']
+                    scale = poll_func['Units'][0]
+                    units = poll_func['Units'][1]
+                    if 'data_format' in list(poll_func.keys()):
+                        data_fmt = poll_func['data_format']
                     else:
-                        self.logger.info(f"Modbus poller has no RIAPS publish port defined.")
+                        data_fmt = ''
 
-            except KeyError as kex:
-                self.logger.info(f"Modbus configuration is missing required setting: {kex}")
-                self.ModbusConfigError = True
+                    if self.dvc["poll"][v]:
+                        max_thr = self.dvc["poll"][v]["max"]
+                        min_thr = self.dvc["poll"][v]["min"]
+                    else:
+                        max_thr = None
+                        min_thr = None
 
-        else:
-            pass  # Device cannot operate due to configuration error
+                    self.poll_dict[v] = [function_code,
+                                         starting_address,
+                                         length,
+                                         scale,
+                                         units,
+                                         data_fmt,
+                                         max_thr,
+                                         min_thr]
+
+            # If there are parameters to poll then create a polling thread object
+            if len(self.poll_dict) == 0:
+                self.logger.warn(f"Modbus poller will not be started!")
+                self.logger.warn(
+                    f"Modbus poller parameters are either not configured or not present in configuration file.")
+            else:
+                self.polling_thread = ModbusPoller(self.device_name,
+                                                   self.slave,
+                                                   self.master,
+                                                   self.poll_dict,
+                                                   self.eventport,
+                                                   self.interval)
+
+        except KeyError as kex:
+            self.logger.info(f"Modbus configuration is missing required setting: {kex}")
 
         self.logger.info(f"ModbusSlave __init__ complete")
 
