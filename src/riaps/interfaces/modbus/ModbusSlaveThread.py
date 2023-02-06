@@ -175,7 +175,7 @@ class ModbusSlave(threading.Thread):
             bit_position = modbus_func.get("bit_position", -1)
             if ignore_bit:  # TODO: What is this for?
                 bit_position = -1
-            Units = modbus_func.get("Units", [1.0, None])
+            Units = modbus_func.get("Units", [1.0, "None"])
             scale_factor = float(Units[0])
             units = Units[1]
             data_fmt = modbus_func.get("data_format", '')
