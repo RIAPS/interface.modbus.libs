@@ -114,17 +114,10 @@ class ModbusSlave(threading.Thread):
                     length = poll_func['length']
                     scale = poll_func['Units'][0]
                     units = poll_func['Units'][1]
-                    if 'data_format' in list(poll_func.keys()):
-                        data_fmt = poll_func['data_format']
-                    else:
-                        data_fmt = ''
 
-                    if self.dvc["poll"][v]:
-                        max_thr = self.dvc["poll"][v]["max"]
-                        min_thr = self.dvc["poll"][v]["min"]
-                    else:
-                        max_thr = None
-                        min_thr = None
+                    data_fmt = poll_func.get("data_format", '')  # use value from config if it exists, otherwise use an empty string
+                    max_thr = self.dvc["poll"][v].get("max", None)
+                    min_thr = self.dvc["poll"][v].get("min", None)
 
                     self.poll_dict[v] = [function_code,
                                          starting_address,
