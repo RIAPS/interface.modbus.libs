@@ -4,7 +4,7 @@
 NEC-BESS-VM1: 
    Description: NEC BESS1
    TCP:
-      Address: 10.0.1.114 
+      Address: 172.21.20.70
       Port: 501
    # RS232:
    #    device: /dev/ttyS1
