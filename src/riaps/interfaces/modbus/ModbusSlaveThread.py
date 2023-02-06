@@ -79,7 +79,6 @@ class ModbusSlave(threading.Thread):
                         'Modbus RTU Connected to Slave [{0}] on Port [{1}]'.format(self.slave, self.device))
                 except Exception as ex:
                     self.logger.info('Modbus RTU Creation Exception: {0}'.format(ex))
-                    self.master = None
 
             elif comname == 'TCP':
                 addr = self.dvc[comname]['Address']
@@ -94,10 +93,8 @@ class ModbusSlave(threading.Thread):
                         'Modbus TCP Connected to Slave [{0}] on Address [{1}:{2}]'.format(self.slave, addr, port))
                 except Exception as ex:
                     self.logger.info(f"Modbus TCP Creation Exception: {ex}")
-                    self.master = None
             else:
                 self.logger.info(f"Modbus device has no communication configuration defined.")
-                self.master = None
 
             if self.master is None:
                 return
@@ -115,7 +112,8 @@ class ModbusSlave(threading.Thread):
                     scale = poll_func['Units'][0]
                     units = poll_func['Units'][1]
 
-                    data_fmt = poll_func.get("data_format", '')  # use value from config if it exists, otherwise use an empty string
+                    data_fmt = poll_func.get("data_format",
+                                             '')  # use value from config if it exists, otherwise use an empty string
                     max_thr = self.dvc["poll"][v].get("max", None)
                     min_thr = self.dvc["poll"][v].get("min", None)
 
@@ -133,13 +131,14 @@ class ModbusSlave(threading.Thread):
                 self.logger.warn(f"Modbus poller will not be started!")
                 self.logger.warn(
                     f"Modbus poller parameters are either not configured or not present in configuration file.")
-            else:
-                self.polling_thread = ModbusPoller(self.device_name,
-                                                   self.slave,
-                                                   self.master,
-                                                   self.poll_dict,
-                                                   self.eventport,
-                                                   self.interval)
+                return
+
+            self.polling_thread = ModbusPoller(self.device_name,
+                                               self.slave,
+                                               self.master,
+                                               self.poll_dict,
+                                               self.eventport,
+                                               self.interval)
 
         except KeyError as kex:
             self.logger.info(f"Modbus configuration is missing required setting: {kex}")
@@ -172,21 +171,14 @@ class ModbusSlave(threading.Thread):
             function_code = modbus_func['function']
             starting_address = modbus_func['start']
             length = modbus_func['length']
-            bit = int(-1)
-            if "bit_position" in modbus_func:
-                if not ignore_bit:
-                    bit = int(modbus_func["bit_position"])
-                units = "None"
-                scaler = 1.0
-            else:
-                scaler = float(modbus_func['Units'][0])
-                units = modbus_func['Units'][1]
-            # scale value per yaml file and convert to int to send to Modbus slave
 
-            if 'data_format' in modbus_func:
-                data_fmt = modbus_func['data_format']
-            else:
-                data_fmt = ''
+            bit_position = modbus_func.get("bit_position", -1)
+            if ignore_bit:  # TODO: What is this for?
+                bit_position = -1
+            Units = modbus_func.get("Units", [1.0, None])
+            scale_factor = float(Units[0])
+            units = Units[1]
+            data_fmt = modbus_func.get("data_format", '')
 
             if self.debugMode:
                 t1 = dt.datetime.now()
@@ -201,37 +193,41 @@ class ModbusSlave(threading.Thread):
                                                     starting_address,
                                                     quantity_of_x=length,
                                                     data_format=data_fmt))
-
-                if self.debugMode:
-                    t1 = dt.datetime.now()
-                    self.logger.info(
-                        f"Response: starting_address={starting_address}, response={response}, timestamp={t1}")
-
-                for v in response:
-                    if bit != -1:
-                        temp = bool(int(v) & self.set_bit(0, bit))
-                        if temp:
-                            values.append(1.0)
-                        else:
-                            values.append(0.0)
-                        if self.debugMode:
-                            if temp:
-                                temp = "Set"
-                            else:
-                                temp = "Clear"
-                            self.logger.info(
-                                f"{tc.Yellow}Bit Read: command={command}, register value={v}, target bit={bit}, result={temp}{tc.RESET}")
-                    else:
-                        values.append(float(v * scaler))
             except Exception as ex:
+                results = {"command": command, "values": values, "units": "error"}
                 if self.debugMode:
                     self.logger.info(f"Modbus command({command}) error={ex})")
-                units = "error"
+                return results
 
+            if self.debugMode:
+                self.logger.info(
+                    f"Response: starting_address={starting_address}, "
+                    f"response={response}, "
+                    f"timestamp={dt.datetime.now()}")
+
+            for v in response:
+                if bit_position != -1:
+                    temp = bool(int(v) & self.set_bit(0, bit_position))
+                    bit_value = 1.0 if temp else 0.0
+                    values.append(bit_value)
+
+                    if self.debugMode:
+                        temp_human_readable = "Set" if temp else "Clear"
+                        self.logger.info(
+                            f"{tc.Yellow}"
+                            f"Bit Read: command={command},"
+                            f" register value={v}, "
+                            f"target bit={bit_position}, "
+                            f"result={temp_human_readable}"
+                            f"{tc.RESET}")
+                else:
+                    values.append(float(v * scale_factor))
             results = {"command": command, "values": values, "units": units}
+
         except KeyError:
             units = "Unknown"
             results = {"command": command, "values": [], "units": units}
+            self.logger.error(f"Unexpected Exception. Create new handler: {results}")
 
         if self.debugMode:
             self.logger.info(f"Return values: {results}")
