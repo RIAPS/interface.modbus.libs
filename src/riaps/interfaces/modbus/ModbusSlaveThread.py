@@ -249,6 +249,7 @@ class ModbusSlave(threading.Thread):
                 bit = int(modbus_func["bit_position"])
                 cmd = command.replace("WRITE", "READ")
                 data = self.read_modbus(cmd)
+                self.logger.info(f"{tc.Red}Read before write: {data}{tc.RESET}")
                 if len(data["values"]) > 0:
                     temp = int(data["values"][0])
                     if values[0] == 0:
