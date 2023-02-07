@@ -164,7 +164,7 @@ class ModbusSlave(threading.Thread):
         self.debugMode = enable
         self.logger.info(f"Modbus Slave [{self.device_name}] debugMode is set to [{self.debugMode}]")
 
-    def read_modbus(self, command, ignore_bit=False):
+    def read_modbus(self, command, is_bit_value=True):
         try:
             modbus_func = self.dvc[command]
             # read Modbus command parameters from yaml file
@@ -173,9 +173,7 @@ class ModbusSlave(threading.Thread):
             length = modbus_func['length']
 
             bit_position = modbus_func.get("bit_position", -1)
-            if ignore_bit:  # TODO: What is this for?
-                bit_position = -1
-            Units = modbus_func.get("Units", [1.0, "None"])
+            Units = modbus_func.get("Units", [1.0, "None"])  # Default values aren't used for anything
             scale_factor = float(Units[0])
             units = Units[1]
             data_fmt = modbus_func.get("data_format", '')
@@ -205,23 +203,24 @@ class ModbusSlave(threading.Thread):
                     f"response={response}, "
                     f"timestamp={dt.datetime.now()}")
 
-            for v in response:
-                if bit_position != -1:
-                    temp = bool(int(v) & self.set_bit(0, bit_position))
-                    bit_value = 1.0 if temp else 0.0
+            # Get the current value of the bit at the bit_position specified
+            for current_value in response:
+                if not is_bit_value:
+                    values.append(float(current_value * scale_factor))
+                else:
+                    bit_value = self.get_bit(current_value, bit_position=bit_position)
                     values.append(bit_value)
 
                     if self.debugMode:
-                        temp_human_readable = "Set" if temp else "Clear"
+                        human_readable = "Set" if bit_value == 1 else "Clear"
                         self.logger.info(
                             f"{tc.Yellow}"
                             f"Bit Read: command={command},"
-                            f" register value={v}, "
+                            f" register value={current_value}, "
                             f"target bit={bit_position}, "
-                            f"result={temp_human_readable}"
+                            f"result={human_readable}"
                             f"{tc.RESET}")
-                else:
-                    values.append(float(v * scale_factor))
+
             results = {"command": command, "values": values, "units": units}
 
         except KeyError:
@@ -313,6 +312,12 @@ class ModbusSlave(threading.Thread):
 
         return results
 
+    # get the value of an individual bit in a value
+    def get_bit(self, value, bit_position):
+        """ Gets a bit in the data 'value' at position index specified by 'bit' """
+        mask = 1 << bit_position  # 0's with a 1 at the bit position
+        return value & mask  # If the bit value at the position is 1 this returns 1.
+
     # set an individual bit on a value
     def set_bit(self, value, bit):
         """ Sets a bit in the data 'value' at position index specified by 'bit' """
@@ -354,7 +359,7 @@ class ModbusSlave(threading.Thread):
                                 values = None
                                 self.logger.warn(
                                     f"ModbusSlaveThread {self.get_device_name()} block write not implemented={cmd}")
-                            if values != None:
+                            if values:
                                 response = self.write_modbus(cmd, values)
                         else:
                             response = {}
@@ -393,14 +398,6 @@ class ModbusSlave(threading.Thread):
                     self.plug.send_pyobj(ansmsg)
             else:
                 self.logger.info(f"Device is dormant, ignoring commands!")
-
-        # if self.polling_thread != None :
-        #     self.polling_thread.deactivate()
-        #     self.polling_thread.join( 5.0 )
-        #     if self.polling_thread.is_alive() :
-        #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread did not exit in the alloted time." )
-        #     else:
-        #         self.logger.info( f"Modbus slave {self.get_device_name()} polling thread exited normally." )
 
         self.logger.info(f"Modbus slave {self.get_device_name()} thread exited.")
 
