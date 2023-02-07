@@ -314,9 +314,9 @@ class ModbusSlave(threading.Thread):
 
     # get the value of an individual bit in a value
     def get_bit(self, value, bit_position):
-        """ Gets a bit in the data 'value' at position index specified by 'bit' """
-        mask = 1 << bit_position  # 0's with a 1 at the bit position
-        return value & mask  # If the bit value at the position is 1 this returns 1.
+        """ Gets a bit in the data 'value' at position index specified by 'bit'
+        https://realpython.com/python-bitwise-operators/#getting-a-bit"""
+        return (value >> bit_position) & 1  # If the bit value at the position is 1 this returns 1.
 
     # set an individual bit on a value
     def set_bit(self, value, bit):
