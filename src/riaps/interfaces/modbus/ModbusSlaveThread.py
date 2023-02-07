@@ -164,7 +164,7 @@ class ModbusSlave(threading.Thread):
         self.debugMode = enable
         self.logger.info(f"Modbus Slave [{self.device_name}] debugMode is set to [{self.debugMode}]")
 
-    def read_modbus(self, command):
+    def read_modbus(self, command, read_full_register=False):
         try:
             modbus_func = self.dvc[command]
             # read Modbus command parameters from yaml file
@@ -205,7 +205,8 @@ class ModbusSlave(threading.Thread):
 
             # Get the current value of the bit at the bit_position specified
             for current_value in response:
-                if bit_position < 0:  # If bit_position is not valid
+                # if bit_position < 0:  # If bit_position is not valid
+                if read_full_register:
                     values.append(float(current_value * scale_factor))
                 else:
                     self.logger.info(f"get bit value at position {bit_position} in {current_value}")
@@ -248,7 +249,7 @@ class ModbusSlave(threading.Thread):
                 scaler = 1
                 bit = int(modbus_func["bit_position"])
                 cmd = command.replace("WRITE", "READ")
-                data = self.read_modbus(cmd)
+                data = self.read_modbus(cmd, read_full_register=True)
                 self.logger.info(f"{tc.Red}Read before write: {data}{tc.RESET}")
                 if len(data["values"]) > 0:
                     temp = int(data["values"][0])
