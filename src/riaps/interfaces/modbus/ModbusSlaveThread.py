@@ -208,6 +208,7 @@ class ModbusSlave(threading.Thread):
                 if not is_bit_value:
                     values.append(float(current_value * scale_factor))
                 else:
+                    self.logger.info(f"get bit value at position {bit_position} in {current_value}")
                     bit_value = self.get_bit(current_value, bit_position=bit_position)
                     values.append(bit_value)
 
