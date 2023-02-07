@@ -164,7 +164,7 @@ class ModbusSlave(threading.Thread):
         self.debugMode = enable
         self.logger.info(f"Modbus Slave [{self.device_name}] debugMode is set to [{self.debugMode}]")
 
-    def read_modbus(self, command, read_full_register=False):
+    def read_modbus(self, command, force_full_register_read=False):
         try:
             modbus_func = self.dvc[command]
             # read Modbus command parameters from yaml file
@@ -205,7 +205,9 @@ class ModbusSlave(threading.Thread):
 
             # Get the current value of the bit at the bit_position specified
             for current_value in response:
-                if read_full_register or bit_position < 0:  # If bit_position is not valid
+                if force_full_register_read or bit_position < 0:  # If bit_position is not valid
+                    #  When writing a bit in a register we need to first read the full register.
+                    #  force_full_register_read causes this even though there is a valid bit_position.
                     values.append(float(current_value * scale_factor))
                 else:
                     self.logger.info(f"get bit value at position {bit_position} in {current_value}")
@@ -239,7 +241,7 @@ class ModbusSlave(threading.Thread):
         results = {}
         try:
             modbus_func = self.dvc[command]
-            # read Modbus command parameters from cofiguration
+            # read Modbus command parameters from configuration
             function_code = modbus_func['function']
             starting_address = modbus_func['start']
             length = modbus_func['length']
@@ -248,7 +250,7 @@ class ModbusSlave(threading.Thread):
                 scaler = 1
                 bit = int(modbus_func["bit_position"])
                 cmd = command.replace("WRITE", "READ")
-                data = self.read_modbus(cmd, read_full_register=True)
+                data = self.read_modbus(cmd, force_full_register_read=True)
                 self.logger.info(f"{tc.Red}Read before write: {data}{tc.RESET}")
                 if len(data["values"]) > 0:
                     temp = int(data["values"][0])
@@ -262,10 +264,7 @@ class ModbusSlave(threading.Thread):
                 scaler = modbus_func['Units'][0]
                 units = modbus_func['Units'][1]
 
-            if 'data_format' in modbus_func:
-                data_fmt = modbus_func['data_format']
-            else:
-                data_fmt = ""
+            data_fmt = modbus_func.get("data_format", "")
 
             if data_fmt == "":
                 modbus_value = []
@@ -277,37 +276,45 @@ class ModbusSlave(threading.Thread):
             if self.debugMode:
                 self.logger.info(f"values={values}, length={length}, modbus values = {modbus_value}")
 
-            if not bit_read_error:
-                try:
-                    modbus_response = self.master.execute(self.slave,
-                                                          getattr(cst, function_code),
-                                                          starting_address,
-                                                          output_value=modbus_value,
-                                                          quantity_of_x=length,
-                                                          data_format=data_fmt)
-
-                    response = list(modbus_response)
-                except Exception as ex:
-                    if self.debugMode:
-                        self.logger.info(f"Modbus command({command}) write error={ex})")
-                    response = []
-                    units = "error"
-            else:
+            # ------------------------------------
+            if bit_read_error:
                 if self.debugMode:
                     self.logger.info(f"Modbus command({command}) bit read/modify/write error)")
-                response = []
                 units = "error"
+                results = {"command": command, "values": [], "units": units}
+                return results
+            # ------------------------------------
 
+            try:
+                modbus_response = self.master.execute(self.slave,
+                                                      getattr(cst, function_code),
+                                                      starting_address,
+                                                      output_value=modbus_value,
+                                                      quantity_of_x=length,
+                                                      data_format=data_fmt)
+            except Exception as ex:
+                if self.debugMode:
+                    self.logger.info(f"Modbus command({command}) write error={ex})")
+                units = "error"
+                results = {"command": command, "values": [], "units": units}
+                return results
+
+            response = list(modbus_response)  # Why is this cast as a list?
             if self.debugMode:
-                self.logger.info(f"modbus reply = {response}")
+                self.logger.info(f"modbus_response = {modbus_response}; type: {type(modbus_response)}"
+                                 f"modbus_response = {response}; type: {type(response)}")
+
+            # ---------------------------------------------
+            results = {"command": command, "values": values, "units": units}
+            # ---------------------------------------------
             # if the write is successful the result is:
             # [ (starting address), (number of registers written) ]
-            if len(response) == 2:
-                if response[0] == starting_address:
-                    if response[1] == length:
-                        results = {"command": command, "values": values, "units": units}
-            else:
-                results = {"command": command, "values": [], "units": units}
+            # if len(response) == 2:
+            #     if response[0] == starting_address:
+            #         if response[1] == length:
+            #             results = {"command": command, "values": values, "units": units}
+            # else:
+            #     results = {"command": command, "values": [], "units": units}
         except KeyError:
             units = "Unknown"
             results = {"command": command, "values": [], "units": units}
