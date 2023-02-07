@@ -205,8 +205,7 @@ class ModbusSlave(threading.Thread):
 
             # Get the current value of the bit at the bit_position specified
             for current_value in response:
-                # if bit_position < 0:  # If bit_position is not valid
-                if read_full_register:
+                if read_full_register or bit_position < 0:  # If bit_position is not valid
                     values.append(float(current_value * scale_factor))
                 else:
                     self.logger.info(f"get bit value at position {bit_position} in {current_value}")
