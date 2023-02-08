@@ -250,16 +250,22 @@ class ModbusSlave(threading.Thread):
                 scaler = 1
                 bit = int(modbus_func["bit_position"])
                 cmd = command.replace("WRITE", "READ")
+
                 data = self.read_modbus(cmd, force_full_register_read=True)
-                self.logger.info(f"{tc.Red}Read before write: {data}{tc.RESET}")
-                if len(data["values"]) > 0:
+
+                self.logger.info(f"{tc.Red}Current register value: {data}{tc.RESET}")
+                if data["values"]:
                     temp = int(data["values"][0])
                     if values[0] == 0:
                         values[0] = float(self.clr_bit(temp, bit))
                     else:
                         values[0] = float(self.set_bit(temp, bit))
                 else:
-                    bit_read_error = True
+                    if self.debugMode:
+                        self.logger.info(f"Modbus command({command}) bit read error)")
+                    units = "error"
+                    results = {"command": command, "values": [], "units": units}
+                    return results
             else:
                 scaler = modbus_func['Units'][0]
                 units = modbus_func['Units'][1]
@@ -276,22 +282,13 @@ class ModbusSlave(threading.Thread):
             if self.debugMode:
                 self.logger.info(f"values={values}, length={length}, modbus values = {modbus_value}")
 
-            # ------------------------------------
-            if bit_read_error:
-                if self.debugMode:
-                    self.logger.info(f"Modbus command({command}) bit read/modify/write error)")
-                units = "error"
-                results = {"command": command, "values": [], "units": units}
-                return results
-            # ------------------------------------
-
             try:
-                modbus_response = self.master.execute(self.slave,
-                                                      getattr(cst, function_code),
-                                                      starting_address,
-                                                      output_value=modbus_value,
-                                                      quantity_of_x=length,
-                                                      data_format=data_fmt)
+                modbus_response: tuple = self.master.execute(self.slave,
+                                                             getattr(cst, function_code),
+                                                             starting_address,
+                                                             output_value=modbus_value,
+                                                             quantity_of_x=length,
+                                                             data_format=data_fmt)
             except Exception as ex:
                 if self.debugMode:
                     self.logger.info(f"Modbus command({command}) write error={ex})")
@@ -302,7 +299,7 @@ class ModbusSlave(threading.Thread):
             response = list(modbus_response)  # Why is this cast as a list?
             if self.debugMode:
                 self.logger.info(f"modbus_response = {modbus_response}; type: {type(modbus_response)}"
-                                 f"modbus_response = {response}; type: {type(response)}")
+                                 f"response = {response}; type: {type(response)}")
 
             # ---------------------------------------------
             results = {"command": command, "values": values, "units": units}
@@ -348,65 +345,69 @@ class ModbusSlave(threading.Thread):
             return
 
         while self.active.is_set():
-            s = dict(self.poller.poll(1000.0))
-            if not self.dormant.is_set():
-                if len(s) > 0:
-                    msg = self.plug.recv_pyobj()
-                    results = []
-                    ansmsg = msg_schema.DeviceAns.new_message()
-                    ansmsg.error = 0
-                    for idx, p in enumerate(msg.params):
-                        cmd = f"{p}_{msg.operation}"
-                        if self.debugMode:
-                            self.logger.info(f"ModbusSlaveThread {self.get_device_name()} message request={cmd}")
-                        if msg.operation == "READ":
-                            response = self.read_modbus(cmd)
-                        elif msg.operation == "WRITE":
-                            if len(msg.params) == len(msg.values):
-                                values = [msg.values[idx], ]
-                            else:
-                                values = None
-                                self.logger.warn(
-                                    f"ModbusSlaveThread {self.get_device_name()} block write not implemented={cmd}")
-                            if values:
-                                response = self.write_modbus(cmd, values)
-                        else:
-                            response = {}
+            socket_has_data = dict(self.poller.poll(1000.0))  # Is this data ever used?
 
-                        if self.debugMode:
-                            self.logger.info(f"ModbusSlaveThread {self.get_device_name()} results={response}")
-
-                        results.append(response)
-
-                        if len(response["values"]) == 0:
-                            if response["units"] == "error":
-                                ansmsg.error = ModbusSystem.Errors.CommError
-                            else:
-                                ansmsg.error = ModbusSystem.Errors.InvalidOperation
-                            response["values"] = [ModbusSystem.DataRanges.MIN_FLT32]
-                        else:
-                            pass
-
-                    vals = []
-                    units = []
-                    parms = []
-                    for d in results:
-                        vals.append(d["values"][0])
-                        units.append(d["units"])
-                        parms.append(d["command"])
-                    if self.debugMode:
-                        self.logger.info(f"{self.get_device_name()} vals={vals}")
-                        self.logger.info(f"{self.get_device_name()} units={units}")
-                        self.logger.info(f"{self.get_device_name()} parms={parms}")
-                    ansmsg.values = list(vals)
-                    ansmsg.units = list(units)
-                    ansmsg.params = list(parms)
-                    ansmsg.device = self.get_device_name()
-                    ansmsg.operation = msg.operation
-                    ansmsg.msgcounter = msg.msgcounter
-                    self.plug.send_pyobj(ansmsg)
-            else:
+            if self.dormant.is_set():
                 self.logger.info(f"Device is dormant, ignoring commands!")
+                continue
+
+            if not socket_has_data:
+                continue
+
+            msg = self.plug.recv_pyobj()  # modbus_cmd_port in (dot)riaps
+            results = []
+
+            for idx, parameter in enumerate(msg.params):
+                cmd = f"{parameter}_{msg.operation}"
+                if self.debugMode:
+                    self.logger.info(f"ModbusSlaveThread {self.get_device_name()} message request={cmd}")
+                if msg.operation == "READ":
+                    response = self.read_modbus(cmd)
+                elif msg.operation == "WRITE":
+                    if len(msg.params) == len(msg.values):
+                        # Check that modbus message has a value for each parameter
+                        values = [msg.values[idx], ]
+                        response = self.write_modbus(cmd, values)
+                    else:
+                        self.logger.warn(f"ModbusSlaveThread {self.get_device_name()} block write not implemented={cmd}")
+                else:
+                    response = {}
+
+                if self.debugMode:
+                    self.logger.info(f"ModbusSlaveThread {self.get_device_name()} results={response}")
+
+                results.append(response)
+
+                # TODO: Doing this after the append... what purpose does is serve?
+                #  also, this would overwrite ansmsg for every paramter. Seems bad.
+                # if response.get("units") == "error":
+                #     ansmsg.error = ModbusSystem.Errors.CommError
+                # elif not response.get("values"):
+                #     response["values"] = [ModbusSystem.DataRanges.MIN_FLT32]
+                #     # TODO: Why do this^ instead of leaving it empty?
+                #     ansmsg.error = ModbusSystem.Errors.InvalidOperation
+
+            vals = []
+            units = []
+            parms = []
+            for d in results:
+                vals.append(d["values"][0])
+                units.append(d["units"])
+                parms.append(d["command"])
+            if self.debugMode:
+                self.logger.info(f"{self.get_device_name()} vals={vals}")
+                self.logger.info(f"{self.get_device_name()} units={units}")
+                self.logger.info(f"{self.get_device_name()} parms={parms}")
+
+            ansmsg = msg_schema.DeviceAns.new_message()
+            ansmsg.error = 0
+            ansmsg.values = list(vals)
+            ansmsg.units = list(units)
+            ansmsg.params = list(parms)
+            ansmsg.device = self.get_device_name()
+            ansmsg.operation = msg.operation
+            ansmsg.msgcounter = msg.msgcounter
+            self.plug.send_pyobj(ansmsg)
 
         self.logger.info(f"Modbus slave {self.get_device_name()} thread exited.")
 
