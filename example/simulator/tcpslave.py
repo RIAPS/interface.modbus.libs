@@ -52,7 +52,7 @@ def main():
     paramList = []
     parser = argparse.ArgumentParser()
     parser.add_argument('--address', required=False, help="IP Address. Default:127.0.0.1", default="127.0.0.1")
-    parser.add_argument('--port', required=False, help="Modbus TCP Port (1-65535). Default:502", default=502)
+    parser.add_argument('--port', required=False, help="Modbus TCP Port (1-65535). Default:501", default=501)
     parser.add_argument('--name', required=False, default="Modbus-Slave",
                         help="Modbus slave name shown in terminal title bar. Default:Modbus-Slave")
     parser.add_argument('--config', required=False, default="config.yaml",
