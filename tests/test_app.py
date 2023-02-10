@@ -44,10 +44,10 @@ def test_cli():
 
     if True:
         required_clients = ['172.21.20.55']
-        app_folder = "/home/riaps/projects/RIAPS/interface.modbus.libs/example"
+        app_folder = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/Minimal"
         c.setAppFolder(app_folder)
-        app_name = c.compileApplication("ModbusApp.riaps", app_folder)
-        depl_file = "Test_ModbusApp.depl"
+        app_name = c.compileApplication("MinimalModbusApp.riaps", app_folder)
+        depl_file = "MinimalModbusApp.depl"
         also_app_name = c.compileDeployment(depl_file)
 
         # start
