@@ -8,9 +8,15 @@ from riaps.interfaces.modbus.ModbusInterface import ModbusInterface
 class ModbusMaster(threading.Thread):
     def __init__(self, path_to_config_file, logger=None):
         super().__init__()
-        self.logger = logger if logger else logging.getLogger(__name__)
-        # TODO: Maybe use getLogger first and check for handlers, then check for
-        #  passed loggers, then use getLogger.
+
+        local_logger = logging.getLogger(__name__)
+        if not local_logger.handlers:
+            self.logger = logger if logger else local_logger
+        else:
+            self.logger = local_logger
+        # Use getLogger first and check for handlers. If there aren't any
+        # use the passed logger if it exists. If not, use local_logger
+
         self.stop_polling = threading.Event()
         self.poller = zmq.Poller()
 
