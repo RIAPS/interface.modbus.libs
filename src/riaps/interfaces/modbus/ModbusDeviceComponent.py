@@ -25,6 +25,8 @@ class ModbusDeviceComponent(Component):
 
     # riaps:keep_impl:begin
     def handleActivate(self):
+        self.logger.debug("handleActivate")
+        return
         for device_name in self.device_config_paths:
             device_config_path = self.device_config_paths[device_name]
             device_thread = ModbusMaster(path_to_config_file=device_config_path)
