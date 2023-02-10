@@ -15,6 +15,7 @@ class ModbusDeviceComponent(Component):
     # riaps:keep_modbus_evt_port:begin
     def on_modbus_event_port(self):
         msg = self.modbus_event_port.recv_pyobj()
+        self.logger.info(f"modbus_event_port received msg: {msg}")
 
     # riaps:keep_modbus_evt_port:end
 
