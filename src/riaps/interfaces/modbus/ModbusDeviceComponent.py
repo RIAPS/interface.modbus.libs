@@ -37,12 +37,17 @@ class ModbusDeviceComponent(Component):
                                          )
             self.device_threads[device_name] = device_thread
             device_thread.start()
-            self.modbus_command_port.set_identity(device_thread.get_identity(self.modbus_command_port))
-            self.modbus_command_port.activate()
+            # self.modbus_command_port.set_identity(device_thread.get_identity(self.modbus_command_port))
+            # self.modbus_command_port.activate()
         self.logger.info("handleActivate complete")
 
     def send_modbus(self, msg):
         self.logger.info(f"send_modbus: {msg}")
+        recipient = msg["device_name"]
+        device_thread = self.device_threads[recipient]
+        port = device_thread.command_port
+        self.modbus_command_port.set_identity(device_thread.get_identity(port))
+
         self.modbus_command_port.send_pyobj(msg)
 
         # start a thread for each device and pass the cmd and event ports.
