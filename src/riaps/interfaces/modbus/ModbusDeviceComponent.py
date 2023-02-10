@@ -44,9 +44,12 @@ class ModbusDeviceComponent(Component):
     def send_modbus(self, msg):
         self.logger.info(f"send_modbus: {msg}")
         recipient = msg["device_name"]
+
         device_thread = self.device_threads[recipient]
-        port = device_thread.command_port
-        self.modbus_command_port.set_identity(device_thread.get_identity(port))
+        inside_port = device_thread.command_port
+        inside_port_identity = inside_port.get_plug_identity(self.modbus_command_port)
+        self.modbus_command_port.set_identity(inside_port_identity)
+        self.modbus_command_port.activate()
 
         self.modbus_command_port.send_pyobj(msg)
 

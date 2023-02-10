@@ -28,7 +28,7 @@ Parm3:
    BlockId: 3
    Type: int
    Order: BE
-   Value: 0
+   Value: 5
    Units: 
       - 1
       - None

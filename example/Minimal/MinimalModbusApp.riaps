@@ -10,10 +10,10 @@ app MinimalModbusApp
 	//   Devices
 	//------------------------
 	
-    device ModbusDevice(device_list)
+    device ModbusDevice(path_to_device_list)
     {
-    	inside modbus_cmd_port;
-		inside modbus_evt_port;
+    	inside modbus_command_port;
+		inside modbus_event_port;
 
 		timer poller 5000;
     }
@@ -22,10 +22,10 @@ app MinimalModbusApp
 	//   Actors
 	//------------------------
 
-	actor ModBusActor(device_list)
+	actor ModBusActor(path_to_device_list)
 	{
 		{ 
-			modbus  : ModbusDevice(device_list=device_list);
+			modbus  : ModbusDevice(path_to_device_list=path_to_device_list);
 		}
 	}
 }

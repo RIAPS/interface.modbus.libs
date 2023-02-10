@@ -20,7 +20,7 @@ Neighbors: []
 VoltageRegulateDG: 1
 ##### only READ commands are allowed to be used as polling functions ####
 poll:
-   ReferenceInput_READ:
+   ReferenceInput:
       # if min > polled_value or max < polled_value an event is posted
       max: 2.0
       min: 1.0
