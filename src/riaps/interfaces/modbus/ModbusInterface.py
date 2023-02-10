@@ -113,7 +113,7 @@ class ModbusInterface:
         else:
             if self.debug_mode:
                 self.logger.info(
-                    f"device_name: {self.device_name }"
+                    f"device_name: {self.device_name}, "
                     f"Response: starting_address={starting_address}, "
                     f"response={result}, "
                     f"timestamp={dt.datetime.now()}")
