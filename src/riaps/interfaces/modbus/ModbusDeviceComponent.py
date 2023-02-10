@@ -22,6 +22,7 @@ class ModbusDeviceComponent(Component):
     # riaps:keep_modbus_cmd_port:begin
     def on_modbus_command_port(self):
         msg = self.modbus_command_port.recv_pyobj()
+        self.logger.info(f"modbus_command_port received msg: {msg}")
     # riaps:keep_modbus_cmd_port:end
 
     # riaps:keep_impl:begin
@@ -37,6 +38,9 @@ class ModbusDeviceComponent(Component):
             self.device_threads[device_name] = device_thread
             device_thread.start()
         self.logger.info("handleActivate complete")
+
+    def send_modbus(self, msg):
+        self.modbus_command_port.send_pyobj(msg)
 
         # start a thread for each device and pass the cmd and event ports.
 
