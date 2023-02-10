@@ -6,7 +6,7 @@ from riaps.interfaces.modbus.ModbusInterface import ModbusInterface
 
 
 class ModbusMaster(threading.Thread):
-    def __init__(self, path_to_config_file, logger=None):
+    def __init__(self, path_to_config_file, logger=None, command_port=None, event_port=None):
         super().__init__()
 
         local_logger = logging.getLogger(__name__)
@@ -19,6 +19,12 @@ class ModbusMaster(threading.Thread):
 
         self.stop_polling = threading.Event()
         self.poller = zmq.Poller()
+        if command_port:
+            self.command_port = command_port.setupPlug(self)
+            self.poller.register(self.command_port, zmq.POLLIN)
+        if event_port:
+            self.event_port = event_port.setupPlug(self)
+            self.poller.register(self.event_port, zmq.POLLIN)
 
         self.modbus_interface = ModbusInterface(path_to_file=path_to_config_file, logger=self.logger)
         self.device_config = self.modbus_interface.device_config
