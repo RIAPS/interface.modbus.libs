@@ -13,14 +13,14 @@ class ModbusDeviceComponent(Component):
         self.device_threads = {}
 
     # riaps:keep_modbus_evt_port:begin
-    def on_modbus_evt_port(self):
-        msg = self.modbus_evt_port.recv_pyobj()
+    def on_modbus_event_port(self):
+        msg = self.modbus_event_port.recv_pyobj()
 
     # riaps:keep_modbus_evt_port:end
 
     # riaps:keep_modbus_cmd_port:begin
-    def on_modbus_cmd_port(self):
-        msg = self.modbus_cmd_port.recv_pyobj()
+    def on_modbus_command_port(self):
+        msg = self.modbus_command_port.recv_pyobj()
     # riaps:keep_modbus_cmd_port:end
 
     # riaps:keep_impl:begin
@@ -28,9 +28,14 @@ class ModbusDeviceComponent(Component):
         self.logger.info("handleActivate")
         for device_name in self.device_config_paths:
             device_config_path = self.device_config_paths[device_name]
-            device_thread = ModbusMaster(path_to_config_file=device_config_path, logger=self.logger)
+            device_thread = ModbusMaster(path_to_config_file=device_config_path,
+                                         logger=self.logger,
+                                         command_port=self.modbus_command_port,
+                                         event_port=self.modbus_event_port
+                                         )
             self.device_threads[device_name] = device_thread
-            device_thread.run()
+            device_thread.start()
+        self.logger.info("handleActivate complete")
 
         # start a thread for each device and pass the cmd and event ports.
 
