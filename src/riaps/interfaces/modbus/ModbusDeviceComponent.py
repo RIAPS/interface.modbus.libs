@@ -41,6 +41,7 @@ class ModbusDeviceComponent(Component):
         self.logger.info("handleActivate complete")
 
     def send_modbus(self, msg):
+        self.logger.info(f"send_modbus: {msg}")
         self.modbus_command_port.send_pyobj(msg)
 
         # start a thread for each device and pass the cmd and event ports.
