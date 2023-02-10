@@ -31,9 +31,12 @@ def set_bit(value, bit_position, bit_value):
 
 class ModbusInterface:
     def __init__(self, path_to_file, logger=None, debug_mode=False):
+
         local_logger = logging.getLogger(__name__)
-        if not local_logger.handlers:
-            self.logger = logger if logger else local_logger
+        if local_logger.handlers:
+            self.logger = local_logger
+        elif logger:
+            self.logger = logger
         else:
             self.logger = local_logger
 

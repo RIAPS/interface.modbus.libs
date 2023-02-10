@@ -10,12 +10,12 @@ class ModbusMaster(threading.Thread):
         super().__init__()
 
         local_logger = logging.getLogger(__name__)
-        if not local_logger.handlers:
-            self.logger = logger if logger else local_logger
+        if local_logger.handlers:
+            self.logger = local_logger
+        elif logger:
+            self.logger = logger
         else:
             self.logger = local_logger
-        # Use getLogger first and check for handlers. If there aren't any
-        # use the passed logger if it exists. If not, use local_logger
 
         self.stop_polling = threading.Event()
         self.poller = zmq.Poller()
