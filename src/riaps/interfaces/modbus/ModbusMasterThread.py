@@ -25,7 +25,7 @@ class ModbusMaster(threading.Thread):
             self.port_poller.register(self.command_port, zmq.POLLIN)
         if event_port:
             self.event_port = event_port.setupPlug(self)
-            self.port_poller.register(self.event_port, zmq.POLLIN)
+        #     self.port_poller.register(self.event_port, zmq.POLLIN)
 
         self.modbus_interface = ModbusInterface(path_to_file=path_to_config_file, logger=self.logger)
         self.device_config = self.modbus_interface.device_config
