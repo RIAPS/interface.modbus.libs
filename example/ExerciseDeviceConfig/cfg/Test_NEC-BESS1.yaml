@@ -15,7 +15,7 @@ TCP:
 #    stopbits: 1
 #    xonxoff: 0
 SlaveID: 1
-Interval: 10
+Poll_Interval_Seconds: 10
 Neighbors: []
 VoltageRegulateDG: 1
 ##### only READ commands are allowed to be used as polling functions ####

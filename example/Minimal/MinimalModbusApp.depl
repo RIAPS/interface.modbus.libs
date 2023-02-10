@@ -1,0 +1,4 @@
+app MinimalModbusApp
+{
+	on (172.21.20.55) ModBusActor(config = "./cfg/Test_Devices.yaml");
+}
