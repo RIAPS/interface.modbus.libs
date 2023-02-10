@@ -37,6 +37,7 @@ class ModbusDeviceComponent(Component):
                                          )
             self.device_threads[device_name] = device_thread
             device_thread.start()
+            self.modbus_command_port.set_identity(device_thread.get_identity(self.modbus_command_port))
             self.modbus_command_port.activate()
         self.logger.info("handleActivate complete")
 
