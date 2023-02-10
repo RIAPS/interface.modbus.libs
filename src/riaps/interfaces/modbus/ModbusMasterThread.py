@@ -41,7 +41,9 @@ class ModbusMaster(threading.Thread):
         while not self.stop_polling.wait(timeout=poll_interval):
             for parameter in parameters_to_poll:
                 self.logger.debug(f"poll parameter: {parameter}")
-                self.modbus_interface.read_modbus(parameter=parameter)
+                modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
+                if self.event_port:
+                    self.event_port.send_pyobj(modbus_result)
 
 
 
