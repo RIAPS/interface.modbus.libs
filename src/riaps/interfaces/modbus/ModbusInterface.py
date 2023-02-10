@@ -42,6 +42,7 @@ class ModbusInterface:
 
         self.device_config = self.load_config_file(path_to_file)
         self.config_validation_receipt = self.validate_configuration()
+        self.device_name = self.device_config["Name"]
         self.master = self.setup_master(self.device_config)
         self.debug_mode = debug_mode if debug_mode else self.device_config.get("debugMode", False)
 
@@ -112,12 +113,14 @@ class ModbusInterface:
         else:
             if self.debug_mode:
                 self.logger.info(
+                    f"device_name: {self.device_name }"
                     f"Response: starting_address={starting_address}, "
                     f"response={result}, "
                     f"timestamp={dt.datetime.now()}")
             return list(result)
 
     def scale_response(self, response, command_name: str, force_full_register_read=False):
+
         command_config = self.device_config[command_name]
         bit_position = command_config.get("bit_position")
         scale_factor = self.device_config[command_name].get("scale_factor")
@@ -132,7 +135,7 @@ class ModbusInterface:
                 bit_value = get_bit(value, bit_position=bit_position)
                 values.append(bit_value)
 
-        results = {"command": command_name, "values": values, "units": units}
+        results = {"device_name": self.device_name, "command": command_name, "values": values, "units": units}
         return results
 
     def read_modbus(self, parameter: str, force_full_register_read=False):
