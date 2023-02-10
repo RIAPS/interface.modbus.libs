@@ -18,7 +18,7 @@ class ModbusMaster(threading.Thread):
         self.device_config = self.modbus_interface.device_config
 
     def run(self) -> None:
-        poll_interval = self.device_config.get("Interval")
+        poll_interval = self.device_config.get("Poll_Interval_Seconds")
         parameters_to_poll = self.device_config.get("poll")
 
         if not parameters_to_poll:
@@ -26,7 +26,7 @@ class ModbusMaster(threading.Thread):
             return
 
         self.logger.debug(f"parameters_to_poll: {parameters_to_poll}")
-        while not self.stop_polling.wait(timeout=10):
+        while not self.stop_polling.wait(timeout=poll_interval):
             for parameter in parameters_to_poll:
                 self.logger.debug(f"poll parameter: {parameter}")
                 self.modbus_interface.read_modbus(parameter=parameter)
