@@ -9,7 +9,7 @@ class ModbusDeviceComponent(Component):
     def __init__(self, path_to_device_list):
         super().__init__()
 
-        self.device_configs, global_debug_mode = config.load_config_files(path_to_device_list)
+        self.device_config_paths, global_debug_mode = config.load_config_paths(path_to_device_list)
         self.device_threads = {}
 
     # riaps:keep_modbus_evt_port:begin
@@ -25,8 +25,9 @@ class ModbusDeviceComponent(Component):
 
     # riaps:keep_impl:begin
     def handleActivate(self):
-        for device_name in self.device_configs:
-            device_thread = ModbusMaster(device_name)
+        for device_name in self.device_config_paths:
+            device_config_path = self.device_config_paths[device_name]
+            device_thread = ModbusMaster(path_to_config_file=device_config_path)
             self.device_threads[device_name] = device_thread
             device_thread.run()
 
