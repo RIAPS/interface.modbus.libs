@@ -37,6 +37,7 @@ class ModbusDeviceComponent(Component):
                                          )
             self.device_threads[device_name] = device_thread
             device_thread.start()
+            self.modbus_command_port.activate()
         self.logger.info("handleActivate complete")
 
     def send_modbus(self, msg):
