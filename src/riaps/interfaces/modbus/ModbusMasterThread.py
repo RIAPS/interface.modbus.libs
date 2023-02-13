@@ -73,7 +73,7 @@ class ModbusMaster(threading.Thread):
         parameters_to_poll = self.device_config.get("poll")
 
         if not parameters_to_poll:
-            self.logger.warning("No parameters configured to poll")
+            self.logger.warn("No parameters configured to poll")
             return
 
         self.logger.debug(f"parameters_to_poll: {parameters_to_poll}")
