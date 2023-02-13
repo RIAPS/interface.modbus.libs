@@ -160,6 +160,7 @@ class ModbusInterface:
         command_config = self.device_config[command_name]
         bit_position = command_config.get("bit_position")
         scale_factor = self.device_config[command_name].get("scale_factor")
+        data_format = self.device_config[command_name].get("data_format", "")
         values_to_write = []
         if bit_position:
             bit_value = values[0]
@@ -168,7 +169,19 @@ class ModbusInterface:
             values_to_write.append(value)
         elif scale_factor:
             for value in values:
-                scaled_value = value / scale_factor  # Why did Gerry cast this as an int?
+                scaled_value = value / scale_factor
+                # Why did Gerry cast this as an int?
+                # Because the division causes it to be a float, and it may need to be
+                # an int to be compatible with the modbus_tk library.
+                # TODO: There are likely some cases that this implementation does not cover.
+                #  for example, if data_format is defined as >H. This was not handled in the
+                #  prior implementation either.
+                if data_format == "":
+                    # if data_format is not specified the modbus_tk library will
+                    # set it to either shorts (e.g,.  data_format = ">" + (quantity_of_x * "H"))
+                    # or unsigned characters, so we make sure
+                    # the input is an int before sending it.
+                    scaled_value = int(scaled_value)
                 values_to_write.append(scaled_value)
         else:
             values_to_write = values
