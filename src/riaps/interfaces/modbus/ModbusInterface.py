@@ -158,9 +158,15 @@ class ModbusInterface:
 
         command_name = f"{parameter}_WRITE"
         command_config = self.device_config[command_name]
-        bit_position = command_config.get("bit_position")
-        scale_factor = self.device_config[command_name].get("scale_factor")
+
+        starting_address = self.device_config[command_name].get("start")
+        register_length = self.device_config[command_name].get("length")
         data_format = self.device_config[command_name].get("data_format", "")
+        scale_factor = self.device_config[command_name].get("scale_factor")
+        units = self.device_config[command_name].get("units", "")
+
+        bit_position = command_config.get("bit_position")
+
         values_to_write = []
         if bit_position:
             bit_value = values[0]
@@ -187,8 +193,29 @@ class ModbusInterface:
             values_to_write = values
 
         response: list = self.execute_modbus_command(command_name, value_to_write=values_to_write)
-        self.logger.debug(f"Response to writing value: {response}")
-        result = self.scale_response([response[1]], command_name, force_full_register_read=True)
+        self.logger.info(f"Response to writing value: {response}")
+
+        # In response to a successful WRITE command the modbus returns
+        # 1: The starting address of the parameters
+        # 2: The number of registers written.
+        if len(response) != 2:
+            self.logger.info(f"{tc.Red}If this happens update code."
+                             f"Write failed: {response}"
+                             f"{tc.RESET}")
+            results = {"command": command_name, "values": [], "units": units}
+            return results
+        if response[0] != starting_address or response[1] == register_length:
+            self.logger.info(f"{tc.Red}If this happens update code."
+                             f"Write failed: {response}"
+                             f"{tc.RESET}")
+            results = {"command": command_name, "values": [], "units": units}
+            return results
+
+        # Since a WRITE command does not return the written value, we insert the written value
+        # manually into the response, and as a result we do not need to scale it.
+        # result = self.scale_response([response[1]], command_name, force_full_register_read=True)
+        # result = self.scale_response(values, command_name, force_full_register_read=True)
+        result = {"device_name": self.device_name, "command": command_name, "values": values, "units": units}
 
         if self.debug_mode:
             self.logger.info(f"Modbus result: {result}")
