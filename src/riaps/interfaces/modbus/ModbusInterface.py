@@ -152,9 +152,6 @@ class ModbusInterface:
         return result
 
     def write_modbus(self, parameter: str, values: list):
-        # Get Current registry values:
-        current_registry_value = self.read_modbus(parameter, force_full_register_read=True)["values"]
-        self.logger.debug(f"Read current_registry_value before write: {current_registry_value}")
 
         command_name = f"{parameter}_WRITE"
         command_config = self.device_config[command_name]
@@ -169,6 +166,10 @@ class ModbusInterface:
 
         values_to_write = []
         if bit_position:
+            # Get Current registry values:
+            current_registry_value = self.read_modbus(parameter, force_full_register_read=True)["values"]
+            self.logger.debug(f"Read current_registry_value before write: {current_registry_value}")
+
             bit_value = values[0]
             value = set_bit(current_registry_value[0], bit_position, bit_value)
             self.logger.debug(f"value after setting bit: {value}")
@@ -176,14 +177,13 @@ class ModbusInterface:
         elif scale_factor:
             for value in values:
                 scaled_value = value / scale_factor
-                # Why did Gerry cast this as an int?
-                # Because the division causes it to be a float, and it may need to be
-                # an int to be compatible with the modbus_tk library.
                 # TODO: There are likely some cases that this implementation does not cover.
                 #  for example, if data_format is defined as >H. This was not handled in the
                 #  prior implementation either.
                 if data_format == "":
-                    # if data_format is not specified the modbus_tk library will
+                    # Why cast this as an int?
+                    # Because the division above causes it to be a float
+                    # and if data_format is not specified the modbus_tk library will
                     # set it to either shorts (e.g,.  data_format = ">" + (quantity_of_x * "H"))
                     # or unsigned characters, so we make sure
                     # the input is an int before sending it.
