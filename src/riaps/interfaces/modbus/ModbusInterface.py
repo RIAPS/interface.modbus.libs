@@ -193,6 +193,7 @@ class ModbusInterface:
             values_to_write = values
 
         response: list = self.execute_modbus_command(command_name, value_to_write=values_to_write)
+        #  https://ozeki.hu/p_5883-mobdbus-function-code-16-write-multiple-holding-registers.html
         self.logger.info(f"Response to writing value: {response}")
 
         # In response to a successful WRITE command the modbus returns
