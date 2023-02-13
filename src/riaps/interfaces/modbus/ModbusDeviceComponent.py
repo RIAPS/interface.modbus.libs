@@ -3,6 +3,8 @@ from riaps.run.comp import Component
 
 import riaps.interfaces.modbus.config as config
 from riaps.interfaces.modbus.ModbusMasterThread import ModbusMaster
+import riaps.interfaces.modbus.TerminalColors as tc
+
 
 
 class ModbusDeviceComponent(Component):
@@ -23,7 +25,7 @@ class ModbusDeviceComponent(Component):
     def on_modbus_command_port(self):
         # Receive response from modbus device
         msg = self.modbus_command_port.recv_pyobj()
-        self.logger.info(f"modbus_command_port receive response msg: {msg}")
+        self.logger.info(f"{tc.Red}modbus_command_port receive response msg: {msg}{tc.RESET}")
     # riaps:keep_modbus_cmd_port:end
 
     # riaps:keep_impl:begin
@@ -43,7 +45,7 @@ class ModbusDeviceComponent(Component):
         self.logger.info("handleActivate complete")
 
     def send_modbus(self, msg):
-        self.logger.info(f"send_modbus: {msg}")
+        self.logger.info(f"{tc.Cyan}send_modbus: {msg}{tc.RESET}")
 
         recipient = msg["to_device"]
         device_thread = self.device_threads[recipient]
