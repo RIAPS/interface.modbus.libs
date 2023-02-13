@@ -9,22 +9,10 @@ class ModbusDevice(ModbusDeviceComponent):
         now = self.poller.recv_pyobj()
         self.logger.info(f"on_poller: {now}")
 
-        msg = {"device_name": "Test_NEC-BESS1"}
+        msg = {"to_device": "Test_NEC-BESS1",
+               "parameter": "GeneratorStatus",
+               "operation": "read",
+               "values": [3.14]}
         self.send_modbus(msg)
 
-    def send_modbus(self, msg):
-        self.logger.info(f"send_modbus: {msg}")
 
-        recipient = msg["device_name"]
-
-        device_thread = self.device_threads[recipient]
-
-        plug = device_thread.command_port
-        plug_identity = self.modbus_command_port.get_plug_identity(plug)
-
-        self.modbus_command_port.set_identity(plug_identity)
-        self.modbus_command_port.activate()
-
-        self.modbus_command_port.activate()
-
-        self.modbus_command_port.send_pyobj(msg)
