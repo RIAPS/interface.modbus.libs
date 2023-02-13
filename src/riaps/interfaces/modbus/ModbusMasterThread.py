@@ -40,13 +40,33 @@ class ModbusMaster(threading.Thread):
 
         while True:
             ports_with_events = dict(self.port_poller.poll(1000))
-            self.logger.info(f"what is the format of ports_with_events: {ports_with_events} ")
             if not ports_with_events:
                 continue
             msg = self.command_port_plug.recv_pyobj()
             self.logger.info(f"command port message: {msg}")
-            response_msg = "dummy response message"
-            self.command_port_plug.send_pyobj(response_msg)
+
+            # read message and send to
+            operation = msg["operation"]
+            parameter = msg["parameter"]
+            if operation == "read":
+                modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
+            elif operation == "write":
+                values = msg["values"]
+                modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
+                                                                   values=values)
+            else:
+                # TODO: test this code.
+                #  also consider updating the other instances of this data structure
+                #  to use the return_status for the error messages instead of units or
+                #  whatever is being used currently.
+                modbus_result = {"device_name": msg["to_device"],
+                                 "command": f"{parameter}_{operation}",
+                                 "values": None,
+                                 "units": None,
+                                 "return_status": f"{operation} is not defined"
+                                 }
+
+            self.command_port_plug.send_pyobj(modbus_result)
 
     def poller(self) -> None:
         poll_interval = self.device_config.get("Poll_Interval_Seconds")
