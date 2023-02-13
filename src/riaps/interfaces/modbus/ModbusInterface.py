@@ -204,7 +204,7 @@ class ModbusInterface:
                              f"{tc.RESET}")
             results = {"command": command_name, "values": [], "units": units}
             return results
-        if response[0] != starting_address or response[1] == register_length:
+        if response[0] != starting_address or response[1] != register_length:
             self.logger.info(f"{tc.Red}If this happens update code."
                              f"Parameter mismatch: {response}"
                              f"{tc.RESET}")
