@@ -23,7 +23,7 @@ import threading
 import time
 from random import random
 import serial
-import Terminal as tc
+import riaps.interfaces.modbus.TerminalColors as tc
 
 print(f"Platform is {tc.LightRed}{platform.system()}{tc.RESET}")
 
