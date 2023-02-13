@@ -61,8 +61,8 @@ class ModbusMaster(threading.Thread):
             for parameter in parameters_to_poll:
                 self.logger.debug(f"poll parameter: {parameter}")
                 modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
-                if self.event_port:
-                    self.event_port.send_pyobj(modbus_result)
+                if self.event_port_plug:
+                    self.event_port_plug.send_pyobj(modbus_result)
 
 
 
