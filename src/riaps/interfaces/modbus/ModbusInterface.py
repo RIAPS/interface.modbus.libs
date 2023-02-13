@@ -200,13 +200,13 @@ class ModbusInterface:
         # 2: The number of registers written.
         if len(response) != 2:
             self.logger.info(f"{tc.Red}If this happens update code."
-                             f"Write failed: {response}"
+                             f"Response wrong length: {response}"
                              f"{tc.RESET}")
             results = {"command": command_name, "values": [], "units": units}
             return results
         if response[0] != starting_address or response[1] == register_length:
             self.logger.info(f"{tc.Red}If this happens update code."
-                             f"Write failed: {response}"
+                             f"Parameter mismatch: {response}"
                              f"{tc.RESET}")
             results = {"command": command_name, "values": [], "units": units}
             return results
