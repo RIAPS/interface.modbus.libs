@@ -18,14 +18,14 @@ class ModbusMaster(threading.Thread):
             self.logger = local_logger
 
         self.port_poller = zmq.Poller()
-        self.command_port = None
-        self.event_port = None
+        self.command_port_plug = None
+        self.event_port_plug = None
         if command_port:
-            self.command_port = command_port.setupPlug(self)
-            self.port_poller.register(self.command_port, zmq.POLLIN)
+            self.command_port_plug = command_port.setupPlug(self)
+            self.port_poller.register(self.command_port_plug, zmq.POLLIN)
         if event_port:
-            self.event_port = event_port.setupPlug(self)
-        #     self.port_poller.register(self.event_port, zmq.POLLIN)
+            self.event_port_plug = event_port.setupPlug(self)
+        #     self.port_poller.register(self.event_port_plug, zmq.POLLIN)
 
         self.modbus_interface = ModbusInterface(path_to_file=path_to_config_file, logger=self.logger)
         self.device_config = self.modbus_interface.device_config
@@ -35,7 +35,7 @@ class ModbusMaster(threading.Thread):
         self.polling_thread.start()
 
     def run(self):
-        if not self.command_port:
+        if not self.command_port_plug:
             return
 
         while True:
@@ -43,10 +43,10 @@ class ModbusMaster(threading.Thread):
             self.logger.info(f"what is the format of ports_with_events: {ports_with_events} ")
             if not ports_with_events:
                 continue
-            msg = self.command_port.recv_pyobj()
+            msg = self.command_port_plug.recv_pyobj()
             self.logger.info(f"command port message: {msg}")
             response_msg = "dummy response message"
-            self.command_port.send_pyobj(response_msg)
+            self.command_port_plug.send_pyobj(response_msg)
 
     def poller(self) -> None:
         poll_interval = self.device_config.get("Poll_Interval_Seconds")
