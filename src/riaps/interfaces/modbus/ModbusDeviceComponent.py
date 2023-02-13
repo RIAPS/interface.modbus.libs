@@ -6,7 +6,6 @@ from riaps.interfaces.modbus.ModbusMasterThread import ModbusMaster
 import riaps.interfaces.modbus.TerminalColors as tc
 
 
-
 class ModbusDeviceComponent(Component):
     def __init__(self, path_to_device_list):
         super().__init__()
