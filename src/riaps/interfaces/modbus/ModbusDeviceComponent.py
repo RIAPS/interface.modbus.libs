@@ -21,8 +21,9 @@ class ModbusDeviceComponent(Component):
 
     # riaps:keep_modbus_cmd_port:begin
     def on_modbus_command_port(self):
+        # Receive response from modbus device
         msg = self.modbus_command_port.recv_pyobj()
-        self.logger.info(f"modbus_command_port received msg: {msg}")
+        self.logger.info(f"modbus_command_port receive response msg: {msg}")
     # riaps:keep_modbus_cmd_port:end
 
     # riaps:keep_impl:begin
