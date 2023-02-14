@@ -104,8 +104,16 @@ The value [modbus device name]] needs to match the name specified in the Modbus 
 [values to write to registers] is a list of the values to be written.
 
 # How to use this example
-
-1. Launch the application using either `riaps_ctrl` or using the test with `pytest -s -v .`.
+1. Launch the Modbus slave simulator
+   1. ```commandline
+      cd simulator
+      ```
+   2. Open two terminal windows
+   3. run the command below with `--port 501` in one and `--port 502` in the other.
+      ```commandline
+      sudo python3 tcpslave.py --address 172.21.20.70 --config nec_bess_slave.yaml --port 501
+      ```
+2. Launch the application using either `riaps_ctrl` or using the test with `pytest -s -v .`.
 
 # Troubleshooting
 
