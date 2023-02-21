@@ -1,29 +1,23 @@
-## Modbus message handling library
+# interface.modbus
 
-## This project uses the modbus-tk module for low level Modbus packet transmission.
+## Overview
+The library provides a device component implementation of modbus for the RIAPS platform.
+To use the library the app developer must provide:
+1. A device list configuration YAML file e.g., `cfg/Test_Device.yaml`
+2. Corresponding device configuration YAML files, e.g., `cfg/Test_NEC-BESS1.yaml`
+3. Specification of the device in the application's (dot)riaps file
+4. A python class file implementing the Modbus device component specified in the (dot)riaps file. 
+An example application using this library can be found in the [`example/Minimal` folder](https://github.com/RIAPS/interface.modbus.libs/tree/main/example/Minimal) with further usage details. 
 
-### For information how to use this library in RAIPS see: interface.modbus.apps
+## Dependencies
 
-##### Using TortoiseGit the submodule can be added to any project as shown below
+## Optional Dependencies
 
-<img src="Images/submodule.png" align="center" width="800">
+# Installation
 
-
-#### Add submodule dialog
-
-<img src="Images/submodule_dialog.png" align="center" width="800">
-
-
-##### The git command for adding this submodule is:
-
-    git.exe submodule add   -- "https://github.com/RIAPS/interface.modbus.libs.git" "Project/FolderToContainTheSubmodule"
-
-
-    For example:
-
-    To add this to the TestModbusOpal sub project in the interface.modbus.apps repository:
-
-    git.exe submodule add   -- "https://github.com/RIAPS/interface.modbus.libs.git" "Python/TestModbusOpal/modbuslibs"
-
-    This will create a new folder named 'modbuslibs' and copy the Modbus library files.
-
+## Install RIAPS Modbus library
+```commandline
+git clone https://github.com/RIAPS/interface.modbus.libs.git
+cd interface.modbus.libs
+sudo python3 -m pip install .
+```

@@ -1,5 +1,5 @@
 app ModbusApp 
 {
-	on (172.21.20.55) MonitorActor();
-	on (172.21.20.55) ModBusActor(config = "./cfg/Test_Devices.yaml");
+    on (172.21.20.55) MonitorActor();
+    on (172.21.20.55) ModBusActor(config = "./cfg/Test_Devices.yaml");
 }

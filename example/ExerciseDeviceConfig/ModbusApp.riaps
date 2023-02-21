@@ -1,47 +1,47 @@
 app ModbusApp
 {
-	message ModbusQry;
-	message ModbusAns;
-	message ModbusCommands;
-	message ModbusEvents;
-	message ModbusControl;
-	message DeviceConfig;
+    message ModbusQry;
+    message ModbusAns;
+    message ModbusCommands;
+    message ModbusEvents;
+    message ModbusControl;
+    message DeviceConfig;
 
-	library cfg;
+    library cfg;
 
-	// component
+    // component
     component ModbusManager() 
     {
-		qry driver_qa: (ModbusQry, ModbusAns) timed;
-      	sub event_from_driver : ModbusEvents;			// subscribe port for modbus events
-      	pub command_to_driver : ModbusCommands;			// publish port for modbus commands
-		sub device_configured : DeviceConfig;
-		timer periodic 5000;
+        qry driver_qa: (ModbusQry, ModbusAns) timed;
+        sub event_from_driver : ModbusEvents;            // subscribe port for modbus events
+        pub command_to_driver : ModbusCommands;          // publish port for modbus commands
+        sub device_configured : DeviceConfig;
+        timer periodic 5000;
     }
-	
+    
     device ModbusInterface(config) 
     {
-    	inside modbus_cmd_port;
-		inside modbus_evt_port;
-       	sub command_from_manager : ModbusCommands ;			// subscribe port for modbus commands
-      	pub event_to_manager : ModbusEvents ;				// Publish port for modbus events
-     	pub device_configured : DeviceConfig ;				// Publish port for configuration complete
-		ans manager_qa: (ModbusQry, ModbusAns) timed;
-    }	
+        inside modbus_cmd_port;
+        inside modbus_evt_port;
+        sub command_from_manager : ModbusCommands ;          // subscribe port for modbus commands
+        pub event_to_manager : ModbusEvents ;                // Publish port for modbus events
+        pub device_configured : DeviceConfig ;               // Publish port for configuration complete
+        ans manager_qa: (ModbusQry, ModbusAns) timed;
+    }    
 
-	actor MonitorActor( ) 
-	{
-		local ModbusCommands, ModbusEvents, DeviceConfig, ModbusQry, ModbusAns;
-		{
-			manager : ModbusManager();
-		}
-	}
+    actor MonitorActor( ) 
+    {
+        local ModbusCommands, ModbusEvents, DeviceConfig, ModbusQry, ModbusAns;
+        {
+            manager : ModbusManager();
+        }
+    }
 
-	actor ModBusActor(config) 
-	{
-		local ModbusCommands, ModbusEvents, DeviceConfig, ModbusQry, ModbusAns;
-		{ 
-			modbus  : ModbusInterface(config=config);
-		}
-	}
+    actor ModBusActor(config) 
+    {
+        local ModbusCommands, ModbusEvents, DeviceConfig, ModbusQry, ModbusAns;
+        { 
+            modbus  : ModbusInterface(config=config);
+        }
+    }
 }
