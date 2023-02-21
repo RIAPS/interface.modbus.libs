@@ -1,4 +1,4 @@
-# interface.modbus
+# RIAPS Modbus Interface
 
 ## Overview
 The library provides a device component implementation of modbus for the RIAPS platform.
