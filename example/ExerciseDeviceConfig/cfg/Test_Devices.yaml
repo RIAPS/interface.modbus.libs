@@ -1,5 +1,0 @@
-
-configs:
-  - ./cfg/Test_NEC-BESS1.yaml
-  - ./cfg/Test_NEC-BESS2.yaml
-GobalDebugMode: 2 # 0=no debug messages, 1=RIAPS Device level debug, 2=Modbus slave low level messages
