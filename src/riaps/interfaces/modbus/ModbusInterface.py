@@ -1,5 +1,7 @@
 import datetime as dt
 import logging
+import socket
+
 from modbus_tk import modbus_rtu
 from modbus_tk import modbus_tcp
 from modbus_tk import exceptions as modbus_exceptions
@@ -110,6 +112,10 @@ class ModbusInterface:
         except ConnectionRefusedError as ex:
             self.logger.error(f"error={ex})")
             return
+        # TODO: catching socket.timeout doesn't work.
+        # except socket.timeout as e_info:
+        #     self.logger.error(f"error={e_info})")
+        #     return True
         else:
             if self.debug_mode:
                 self.logger.info(
@@ -142,6 +148,7 @@ class ModbusInterface:
 
         command_name = f"{parameter}_READ"
         response: list = self.execute_modbus_command(command_name)
+        self.logger.info(response)
         if not response:
             return None
         result = self.scale_response(response, command_name, force_full_register_read)
