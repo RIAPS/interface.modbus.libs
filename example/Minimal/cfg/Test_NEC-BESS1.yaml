@@ -6,7 +6,7 @@ Description: NEC BESS1
 Protocol: TCP
 TCP:
    Address: 172.21.20.70
-   Port: 501
+   Port: 5501
 # RS232:
 #    device: /dev/ttyS1
 #    baudrate: 57600
@@ -20,10 +20,10 @@ Neighbors: []
 VoltageRegulateDG: 1
 ##### only READ commands are allowed to be used as polling functions ####
 poll:
-   ReferenceInput:
-      # if min > polled_value or max < polled_value an event is posted
-      max: 2.0
-      min: 1.0
+#   ReferenceInput:
+#      # if min > polled_value or max < polled_value an event is posted
+#      max: 2.0
+#      min: 1.0
 debugMode: True
 
 ###### NO input register for NEC BESS, all are holding registers ######
