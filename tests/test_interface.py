@@ -56,17 +56,19 @@ def test_write_read(modbus_interface, tcp_slave):
     result = modbus_interface.read_modbus(parameter="ReferenceInput")
     print(f"input: {value} output: {result['values']}")
     assert result['values'] == value
+    tcp_slave.stop()
 
 
+# @pytest.mark.skip
 def test_slave_failure2(modbus_interface, tcp_slave):
     """
     This test highligts  a problem with the modbus_tk implementation.
     It uses recv without knowing if anything is on the socket and has no error handling.
+    Unfortunately it is non-deterministic, so it sometimes fails to fail.
     https://github.com/ljean/modbus-tk/blob/6e22b6ba68fc2f0e15c598b50b55d667a6a8e7f2/modbus_tk/modbus_tcp.py#L216
     https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
     """
     import socket
-    tcp_slave.stop()
     with pytest.raises(socket.timeout) as e_info:
         result = modbus_interface.read_modbus(parameter="ReferenceInput")
         print(e_info)

@@ -11,6 +11,21 @@ import time
 from riaps.ctrl.ctrl import Controller
 from riaps.utils.config import Config
 
+import example.simulator.tcpslave_sim as tcpslave_sim
+
+
+@pytest.fixture(scope="session")
+def tcp_slave():
+    modbus_config_file_path = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/simulator/modbus_cfg.yaml"
+    device_config_file_path = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/simulator/device_cfg.yaml"
+    server = tcpslave_sim.main(port=5501,
+                               address="172.21.20.70",
+                               modbus_config_file_path=modbus_config_file_path,
+                               device_config_file_path=device_config_file_path)
+    server.start()
+    time.sleep(0.1)
+    yield server
+
 
 @pytest.mark.skip
 def test_sanity():
@@ -30,7 +45,7 @@ class FileHandler(watchdog.events.FileSystemEventHandler):
         self.event_q.put(f"{event.src_path}")
 
 
-def test_cli():
+def test_cli(tcp_slave):
     the_config = Config()
     c = Controller(port=8888, script="-")
 
