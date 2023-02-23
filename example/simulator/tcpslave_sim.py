@@ -17,7 +17,7 @@ required_parameters = {
                "initial_values",
                "num_registers"]
 }
-verbose = False
+verbose = True
 
 
 def load_config(config_path, config_type):
@@ -32,6 +32,13 @@ def load_config(config_path, config_type):
 
 
 def main(port, address, modbus_config_file_path, device_config_file_path):
+    """
+    :param port:
+    :param address:
+    :param modbus_config_file_path:
+    :param device_config_file_path:
+    :return:
+    """
     Cyan = "\033[96m"
     Yellow = "\033[93m"
     modbus_block_config = load_config(modbus_config_file_path, "modbus_block")
@@ -71,10 +78,10 @@ def main(port, address, modbus_config_file_path, device_config_file_path):
         parameter = device_conifg[parameter_name]
         byte_order = parameter.get("byte_order")
         struct_byte_order = ">" if byte_order == "BE" else "<"
-
-        format = f'{struct_byte_order}{parameter.get("data_type")}'
-        initial_values = parameter.get("initial_values")
-        intermediate_bytes = struct.pack(format, initial_values)
+        initial_values = list(map(lambda x: x*parameter.get("scale_factor", 1), parameter.get("initial_values")))
+        print(initial_values)
+        format = f'{struct_byte_order}{parameter.get("data_type")*len(initial_values)}'
+        intermediate_bytes = struct.pack(format, *initial_values)
         register_values = list(struct.unpack(f'{struct_byte_order}{"H"*parameter.get("num_registers")}', intermediate_bytes))
 
         slave1.set_values(block_name=parameter.get("block_name"),
@@ -88,7 +95,7 @@ def main(port, address, modbus_config_file_path, device_config_file_path):
                   f'{Cyan}{parameter.get("register_name"):30}{tc.RESET}'
                   f'({parameter.get("starting_address"):0>5}) '
                   f'{byte_order:>10} '
-                  f'{tc.yellow}{initial_values:12}{tc.RESET} '
+                  f'{tc.yellow}{str(initial_values):12}{tc.RESET} '  # str cast is used so that string offset will work.
                   f'{intermediate_bytes.hex()}'
                   )
 
