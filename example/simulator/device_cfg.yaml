@@ -1,0 +1,141 @@
+---
+Parm1: 
+   register_name: ackalarms
+   block_name: HOLDING_REGISTERS
+   starting_address: 54
+   initial_values: [10, 11, 12, 13]
+   byte_order: "BE"  # > big-endian; < little-endian
+   data_type: h
+   num_registers: 4
+   scale_factor: 1
+   units: None
+Parm2:
+   register_name: powerblockenablecontrol12
+   block_name: HOLDING_REGISTERS
+   starting_address: 51
+   initial_values: [0]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+Parm3:
+   register_name: modecontrol
+   block_name: HOLDING_REGISTERS
+   starting_address: 50
+   initial_values: [5]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+Parm4:
+   register_name: realpowermode
+   block_name: HOLDING_REGISTERS
+   starting_address: 7000
+   initial_values: [0]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+Parm5:
+   register_name: ReferenceInput
+   block_name: HOLDING_REGISTERS
+   starting_address: 7020
+   initial_values: [3.14]
+   byte_order: "BE"  # > big-endian; < little-endian
+   data_type: f
+   num_registers: 2
+   scale_factor: 1
+   units: None
+Parm6:
+   register_name: Dcvoltage
+   block_name: HOLDING_REGISTERS
+   starting_address: 2000
+   initial_values: [305419896]
+   byte_order: "BE"
+   data_type: i
+   num_registers: 2
+   scale_factor: 1
+   units: None
+Parm7:
+   register_name: averagesoc
+   block_name: HOLDING_REGISTERS
+   starting_address: 7000
+   initial_values: [0.05]
+   byte_order: "BE"
+   data_type: f
+   num_registers: 2
+   scale_factor: 100
+   units: Percent
+Parm8:
+   register_name: powerblockenablestatus12
+   block_name: HOLDING_REGISTERS
+   starting_address: 28
+   initial_values: [-21555]
+   byte_order: "BE"
+   data_type: i
+   num_registers: 2
+   scale_factor: 1
+   units: None
+Parm9:
+   register_name: groupmode
+   block_name: HOLDING_REGISTERS
+   starting_address: 7
+   initial_values: [0]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+Parm10:
+   register_name: RealPowerDispatch_Enable
+   block_name: HOLDING_REGISTERS
+   starting_address: 6000
+   initial_values: [0]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+Parm11:
+   register_name: block
+   block_name: HOLDING_REGISTERS
+   starting_address: 10
+   initial_values: [1]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: Nonee
+Parm12:
+   register_name: block1
+   block_name: HOLDING_REGISTERS
+   starting_address: 11
+   initial_values: [2]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+Parm13:
+   register_name: block2
+   block_name: HOLDING_REGISTERS
+   starting_address: 12
+   initial_values: [3]
+   byte_order: "BE"
+   data_type: h
+   num_registers: 1
+   scale_factor: 1
+   units: None
+
+
+
+
+      
+      
+      
+      
+      
+         

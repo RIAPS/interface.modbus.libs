@@ -1,0 +1,31 @@
+app MinimalModbusApp
+{
+    library cfg;
+
+    //------------------------
+    //   components
+    //------------------------
+
+    //------------------------
+    //   Devices
+    //------------------------
+    
+    device ModbusDevice(path_to_device_list)
+    {
+        inside modbus_command_port;
+    inside modbus_event_port;
+
+        timer poller 5000;
+    }
+
+    //------------------------
+    //   Actors
+    //------------------------
+
+    actor ModBusActor(path_to_device_list)
+    {
+        { 
+            modbus  : ModbusDevice(path_to_device_list=path_to_device_list);
+        }
+    }
+}
