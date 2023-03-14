@@ -20,7 +20,7 @@ An example application using this library can be found in the [`example/Minimal`
 
 * On single node locally
 ```commandline
-sudo python3 -m pip install 'riaps.interfaces.mqtt @ git+https://github.com/RIAPS/interface.modbus.libs.git'
+sudo python3 -m pip install 'riaps.interfaces.modbus @ git+https://github.com/RIAPS/interface.modbus.libs.git'
 ```
 * On cluster of nodes using python fabric
 ```commandline
