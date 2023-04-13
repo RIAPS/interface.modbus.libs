@@ -10,14 +10,14 @@ class ModbusDeviceComponent(Component):
     def __init__(self, path_to_device_list):
         super().__init__()
 
-        self.device_config_paths, global_debug_mode = config.load_config_paths(path_to_device_list)
+        self.device_config_paths, self.global_debug_mode = config.load_config_paths(path_to_device_list)
         self.device_threads = {}
 
     # riaps:keep_modbus_evt_port:begin
     def on_modbus_event_port(self):
         msg = self.modbus_event_port.recv_pyobj()
         self.logger.info(f"modbus_event_port received msg: {msg}")
-
+        return msg
     # riaps:keep_modbus_evt_port:end
 
     # riaps:keep_modbus_cmd_port:begin
@@ -25,6 +25,7 @@ class ModbusDeviceComponent(Component):
         # Receive response from modbus device
         msg = self.modbus_command_port.recv_pyobj()
         self.logger.info(f"{tc.Red}modbus_command_port receive response msg: {msg}{tc.RESET}")
+        return msg
     # riaps:keep_modbus_cmd_port:end
 
     # riaps:keep_impl:begin
