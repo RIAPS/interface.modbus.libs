@@ -11,12 +11,11 @@ import sys
 import yaml
 
 from riaps.interfaces.modbus.ModbusSystemSettings import ModbusSystem
+from riaps.interfaces.modbus.config import load_config_file, validate_configuration
 import riaps.interfaces.modbus.TerminalColors as tc
 
-# get the value of an individual bit in a value
-from typing import List
 
-
+# get the value of an individual bit in a value from typing import List
 def get_bit(value, bit_position):
     """ Gets a bit in the data 'value' at position index specified by 'bit'
     https://realpython.com/python-bitwise-operators/#getting-a-bit"""
@@ -42,23 +41,11 @@ class ModbusInterface:
         else:
             self.logger = local_logger
 
-        self.device_config = self.load_config_file(path_to_file)
-        self.config_validation_receipt = self.validate_configuration()
+        self.device_config = load_config_file(path_to_file)
+        self.config_validation_receipt = validate_configuration(self.device_config)
         self.device_name = self.device_config["Name"]
         self.master = self.setup_master(self.device_config)
         self.debug_mode = debug_mode if debug_mode else self.device_config.get("debugMode", False)
-
-    def load_config_file(self, path_to_file):
-        with open(path_to_file, 'r') as file:  # Intentionally do not handle exception
-            device_config = yaml.safe_load(file)
-        return device_config
-
-    def validate_configuration(self):
-        required_parameters = ["Name", "Protocol", self.device_config.get("Protocol", "MISSING"), "SlaveID"]
-        for parameter in required_parameters:
-            if parameter not in self.device_config:
-                return {"return_code": 1, "msg": f"Configuration missing for {parameter}"}
-        return {"return_code": 0, "msg": "Valid device configuration"}
 
     def setup_master(self, device_config):
         protocol = device_config["Protocol"]
