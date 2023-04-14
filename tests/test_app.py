@@ -77,6 +77,9 @@ def test_cli(tcp_slave):
             print(f"known clients: {known_clients}")
             time.sleep(1)
 
+        # load application
+        app_loaded = c.loadByName(app_name)
+        print(f"app loaded? {app_loaded}")
         # launch application
         print("launch app")
         is_app_launched = c.launchByName(app_name)
