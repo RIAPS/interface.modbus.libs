@@ -87,8 +87,7 @@ class ModbusInterface:
 
         if self.debug_mode:
             msg = f"{command_name}: value_to_write: {value_to_write}" if value_to_write else f"{command_name}"
-            self.logger.info(f"ModbusInterface | execute_modbus_command\n"
-                             f"{msg}")
+            self.logger.info(f"ModbusInterface | execute_modbus_command | {msg}")
 
         try:
             result: tuple = self.master.execute(self.device_config["SlaveID"],
@@ -106,33 +105,23 @@ class ModbusInterface:
         #     return True
         else:
             if self.debug_mode:
-
                 strings = [
                     f"ModbusInterface | execute_modbus_command",
-                    f"device_name: {self.device_name}, ",
+                    f"device_name: {self.device_name}",
                     f"parameter: {command_name}",
-                    f"starting_address: {starting_address}, ",
-                    f"response: {str(result)}, ",
+                    f"starting_address: {starting_address}",
+                    f"response: {result}",
                     f"timestamp: {dt.datetime.now()}"
                 ]
                 for string in strings:
                     try:
-                        self.logger.info(f"{tc.Yellow}"
+                        self.logger.info(f"{tc.White}"
                                          f"{string}"
                                          f"{tc.RESET}")
                     except TypeError as ex:
                         self.logger.warning(f"{tc.Red}"
                                             f"Spdlog had trouble: {ex}"
                                             f"{tc.RESET}")
-
-                # self.logger.info(
-                #     f"ModbusInterface | execute_modbus_command \n"
-                #     f"device_name: {self.device_name}, "
-                #     f"parameter: {command_name}",
-                #     f"starting_address: {starting_address}, "
-                #     f"response: {str(result)}, "
-                #     f"timestamp: {dt.datetime.now()}"
-                # )
             return list(result)
 
     def scale_response(self, response, command_name: str, force_full_register_read=False):
@@ -160,14 +149,12 @@ class ModbusInterface:
 
         command_name = f"{parameter}_READ"
         response: list = self.execute_modbus_command(command_name)
-        self.logger.info(f"ModbusInterface | read_modbus | Response is {str(response)}")
-        # Cast as string because spdlog complains about "incompatible function arguments" if response is None
         if not response:
             return None
         result = self.scale_response(response, command_name, force_full_register_read)
 
         if self.debug_mode:
-            self.logger.info(f"Modbus result: {result}")
+            self.logger.info(f"ModbusInterface | read_modbus | Modbus result: {result}")
 
         return result
 
