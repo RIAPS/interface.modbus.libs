@@ -107,13 +107,32 @@ class ModbusInterface:
         else:
             if self.debug_mode:
 
-                self.logger.info(
-                    f"ModbusInterface | execute_modbus_command \n"
-                    f"device_name: {self.device_name}, "
+                strings = [
+                    f"ModbusInterface | execute_modbus_command",
+                    f"device_name: {self.device_name}, ",
                     f"parameter: {command_name}",
-                    f"starting_address: {starting_address}, "
-                    f"response: {result}, "
-                    f"timestamp: {dt.datetime.now()}")
+                    f"starting_address: {starting_address}, ",
+                    f"response: {str(result)}, ",
+                    f"timestamp: {dt.datetime.now()}"
+                ]
+                for string in strings:
+                    try:
+                        self.logger.info(f"{tc.Yellow}"
+                                         f"{string}"
+                                         f"{tc.RESET}")
+                    except TypeError as ex:
+                        self.logger.warning(f"{tc.Red}"
+                                            f"Spdlog had trouble: {ex}"
+                                            f"{tc.RESET}")
+
+                # self.logger.info(
+                #     f"ModbusInterface | execute_modbus_command \n"
+                #     f"device_name: {self.device_name}, "
+                #     f"parameter: {command_name}",
+                #     f"starting_address: {starting_address}, "
+                #     f"response: {str(result)}, "
+                #     f"timestamp: {dt.datetime.now()}"
+                # )
             return list(result)
 
     def scale_response(self, response, command_name: str, force_full_register_read=False):
