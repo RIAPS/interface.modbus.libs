@@ -107,6 +107,7 @@ class ModbusInterface:
             if self.debug_mode:
                 self.logger.info(
                     f"device_name: {self.device_name}, "
+                    f"parameter: {command_name}",
                     f"Response: starting_address={starting_address}, "
                     f"response={result}, "
                     f"timestamp={dt.datetime.now()}")
@@ -137,6 +138,9 @@ class ModbusInterface:
         response: list = self.execute_modbus_command(command_name)
         self.logger.info(response)
         if not response:
+            self.logger.warning(f"ModbusInterface | read_modbus \n"
+                                f"Response is {str(response)}")
+            # Cast as string because spdlog complains about "incompatible function arguments"
             return None
         result = self.scale_response(response, command_name, force_full_register_read)
 
