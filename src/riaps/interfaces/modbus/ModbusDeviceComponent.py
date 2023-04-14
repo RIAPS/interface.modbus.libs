@@ -24,7 +24,9 @@ class ModbusDeviceComponent(Component):
     def on_modbus_command_port(self):
         # Receive response from modbus device
         msg = self.modbus_command_port.recv_pyobj()
-        self.logger.info(f"{tc.Red}modbus_command_port receive response msg: {msg}{tc.RESET}")
+        self.logger.info(f"{tc.Red}"
+                         f"ModbusDeviceComponent | on_modbus_command_port | receive modbus response msg: \n {msg}"
+                         f"{tc.RESET}")
         return msg
     # riaps:keep_modbus_cmd_port:end
 
