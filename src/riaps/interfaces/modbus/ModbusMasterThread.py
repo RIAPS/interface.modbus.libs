@@ -43,7 +43,7 @@ class ModbusMaster(threading.Thread):
             if not ports_with_events:
                 continue
             msg = self.command_port_plug.recv_pyobj()
-            self.logger.info(f"command port message: {msg}")
+            self.logger.info(f"ModbusMasterThread | run | receive message on command port: {msg}")
 
             # read message and read modbus
             # TODO: Probably need to loop over parameters and values.
