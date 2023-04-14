@@ -86,9 +86,9 @@ class ModbusInterface:
         data_fmt = command_config.get("data_format", '')
 
         if self.debug_mode:
-            msg = f"ModbusInterface | execute_modbus_command\n" \
-                  f"{command_name}: value_to_write: {value_to_write}" if value_to_write else f"{command_name}"
-            self.logger.info(msg)
+            msg = f"{command_name}: value_to_write: {value_to_write}" if value_to_write else f"{command_name}"
+            self.logger.info(f"ModbusInterface | execute_modbus_command\n"
+                             f"{msg}")
 
         try:
             result: tuple = self.master.execute(self.device_config["SlaveID"],
@@ -109,11 +109,11 @@ class ModbusInterface:
 
                 self.logger.info(
                     f"ModbusInterface | execute_modbus_command \n"
-                    f"device_name: {type(self.device_name)}, "
-                    f"parameter: {type(command_name)}",
-                    f"starting_address:{type(starting_address)}, "
-                    f"response={type(result)}, "
-                    f"timestamp={type(dt.datetime.now())}")
+                    f"device_name: {self.device_name}, "
+                    f"parameter: {command_name}",
+                    f"starting_address: {starting_address}, "
+                    f"response: {result}, "
+                    f"timestamp: {dt.datetime.now()}")
             return list(result)
 
     def scale_response(self, response, command_name: str, force_full_register_read=False):
@@ -139,11 +139,9 @@ class ModbusInterface:
 
         command_name = f"{parameter}_READ"
         response: list = self.execute_modbus_command(command_name)
-        self.logger.info(response)
+        self.logger.info(f"ModbusInterface | read_modbus | Response is {str(response)}")
+        # Cast as string because spdlog complains about "incompatible function arguments" if response is None
         if not response:
-            self.logger.warning(f"ModbusInterface | read_modbus \n"
-                                f"Response is {str(response)}")
-            # Cast as string because spdlog complains about "incompatible function arguments"
             return None
         result = self.scale_response(response, command_name, force_full_register_read)
 
