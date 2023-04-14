@@ -86,7 +86,8 @@ class ModbusInterface:
         data_fmt = command_config.get("data_format", '')
 
         if self.debug_mode:
-            msg = f"{command_name}: value_to_write: {value_to_write}" if value_to_write else f"{command_name}"
+            msg = f"ModbusInterface | execute_modbus_command\n" \
+                  f"{command_name}: value_to_write: {value_to_write}" if value_to_write else f"{command_name}"
             self.logger.info(msg)
 
         try:
@@ -105,12 +106,14 @@ class ModbusInterface:
         #     return True
         else:
             if self.debug_mode:
+
                 self.logger.info(
-                    f"device_name: {self.device_name}, "
-                    f"parameter: {command_name}",
-                    f"Response: starting_address={starting_address}, "
-                    f"response={result}, "
-                    f"timestamp={dt.datetime.now()}")
+                    f"ModbusInterface | execute_modbus_command \n"
+                    f"device_name: {type(self.device_name)}, "
+                    f"parameter: {type(command_name)}",
+                    f"starting_address:{type(starting_address)}, "
+                    f"response={type(result)}, "
+                    f"timestamp={type(dt.datetime.now())}")
             return list(result)
 
     def scale_response(self, response, command_name: str, force_full_register_read=False):
