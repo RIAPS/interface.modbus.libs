@@ -48,26 +48,37 @@ class ModbusMaster(threading.Thread):
             # read message and read modbus
             # TODO: Probably need to loop over parameters and values.
             operation = msg["operation"]
-            parameter = msg["parameter"]
-            if operation == "READ":
-                modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
-            elif operation == "WRITE":
-                values = msg["values"]
-                modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
-                                                                   values=values)
-            else:
-                # TODO: test this code.
-                #  also consider updating the other instances of this data structure
-                #  to use the return_status for the error messages instead of units or
-                #  whatever is being used currently.
-                modbus_result = {"device_name": msg["to_device"],
-                                 "command": f"{parameter}_{operation}",
-                                 "values": None,
-                                 "units": None,
-                                 "return_status": f"{operation} is not defined"
-                                 }
+            parameters = msg["parameters"]
+            values = msg["values"]
+            modbus_response_values = []
+            for (parameter, value) in zip(parameters, values):
+                if operation == "READ":
+                    modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
+                    self.logger.info(f"ModbusMasterThread | run \n"
+                                     f"operation: {operation}\n"
+                                     f"result: {modbus_result}")
+                elif operation == "WRITE":
+                    modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
+                                                                       values=value)
+                    self.logger.info(f"ModbusMasterThread | run \n"
+                                     f"operation: {operation}\n"
+                                     f"result: {modbus_result}")
+                else:
+                    # TODO: test this code.
+                    #  also consider updating the other instances of this data structure
+                    #  to use the return_status for the error messages instead of units or
+                    #  whatever is being used currently.
+                    modbus_result = {"device_name": msg["to_device"],
+                                     "command": f"{parameter}_{operation}",
+                                     "values": None,
+                                     "units": None,
+                                     "return_status": f"{operation} is not defined"
+                                     }
 
-            self.command_port_plug.send_pyobj(modbus_result)
+            # self.logger.info(f"ModbusMasterThread | run \n"
+            #                  f"operation: {operation}\n"
+            #                  f"result: {modbus_response_values}")
+            # self.command_port_plug.send_pyobj(modbus_response_values)
 
     def poller(self) -> None:
         poll_interval = self.device_config.get("Poll_Interval_Seconds")

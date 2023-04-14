@@ -95,7 +95,7 @@ def main(port, address, modbus_config_file_path, device_config_file_path):
                   f'{Cyan}{parameter.get("register_name"):30}{tc.RESET}'
                   f'({parameter.get("starting_address"):0>5}) '
                   f'{byte_order:>10} '
-                  f'{tc.yellow}{str(initial_values):12}{tc.RESET} '  # str cast is used so that string offset will work.
+                  f'{tc.Yellow}{str(initial_values):12}{tc.RESET} '  # str cast is used so that string offset will work.
                   f'{intermediate_bytes.hex()}'
                   )
 

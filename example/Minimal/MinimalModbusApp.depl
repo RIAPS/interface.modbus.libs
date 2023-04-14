@@ -1,4 +1,4 @@
 app MinimalModbusApp
 {
-    on (172.21.20.55) ModBusActor(path_to_device_list = "./cfg/Test_Devices.yaml");
+    on (172.21.20.51) ModBusActor(path_to_device_list = "./cfg/Test_Devices.yaml");
 }

@@ -58,7 +58,7 @@ def test_cli(tcp_slave):
     observer.start()
 
     if True:
-        required_clients = ['172.21.20.55']
+        required_clients = ['172.21.20.51']
         app_folder = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/Minimal"
         c.setAppFolder(app_folder)
         app_name = c.compileApplication("MinimalModbusApp.riaps", app_folder)
