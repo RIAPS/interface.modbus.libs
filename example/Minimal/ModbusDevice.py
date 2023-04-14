@@ -6,7 +6,7 @@ class ModbusDevice(ModbusDeviceComponent):
         super().__init__(path_to_device_list)
 
         self.counter = 0
-        self.values_to_write = [0, 1, 4, 5]
+        self.values_to_write = [[0], [1], [4], [5]]
 
     def on_poller(self):
         now = self.poller.recv_pyobj()
