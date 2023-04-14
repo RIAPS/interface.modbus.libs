@@ -131,6 +131,8 @@ class ModbusInterface:
             elif bit_position:
                 bit_value = get_bit(value, bit_position=bit_position)
                 values.append(bit_value)
+            else:
+                values.append(value)
 
         results = {"device_name": self.device_name, "command": command_name, "values": values, "units": units}
         return results
