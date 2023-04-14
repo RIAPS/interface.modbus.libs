@@ -45,12 +45,13 @@ class ModbusMaster(threading.Thread):
             msg = self.command_port_plug.recv_pyobj()
             self.logger.info(f"command port message: {msg}")
 
-            # read message and send to
+            # read message and read modbus
+            # TODO: Probably need to loop over parameters and values.
             operation = msg["operation"]
             parameter = msg["parameter"]
-            if operation == "read":
+            if operation == "READ":
                 modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
-            elif operation == "write":
+            elif operation == "WRITE":
                 values = msg["values"]
                 modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
                                                                    values=values)
