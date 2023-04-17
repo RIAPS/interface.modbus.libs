@@ -96,6 +96,9 @@ class ModbusInterface:
             self.logger.error(f"error={ex})")
             return
         # TODO: catching socket.timeout doesn't work.
+        except Exception as ex:
+            self.logger.error(f"error={ex})")
+            return
         # except socket.timeout as e_info:
         #     self.logger.error(f"error={e_info})")
         #     return True
