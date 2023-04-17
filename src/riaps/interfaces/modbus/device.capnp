@@ -25,7 +25,7 @@ struct DeviceAns {
     values @4: List(Float64)=[0.0];
     states @5: List(Bool)=[false];
     units @6: List(Text);
-    returnStatus @6: List(Text) = [];
+    returnStatus @7: List(Text) = [];
     et    @8: Float32 = 0.0;
     msgcounter @9: Int64;
 }
