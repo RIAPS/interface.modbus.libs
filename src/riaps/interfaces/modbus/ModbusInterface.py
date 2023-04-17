@@ -131,6 +131,7 @@ class ModbusInterface:
         scale_factor = self.device_config[command_name].get("scale_factor")
         units = self.device_config[command_name].get("units")
         values = []
+        errors = []  # TODO: add errors as they come up
         for value in response:
             if scale_factor:
                 values.append(value * scale_factor)
@@ -142,7 +143,11 @@ class ModbusInterface:
             else:
                 values.append(value)
 
-        results = {"device_name": self.device_name, "command": command_name, "values": values, "units": units}
+        results = {"device_name": self.device_name,
+                   "command": command_name,
+                   "values": values,
+                   "units": units,
+                   "errors": errors}
         return results
 
     def read_modbus(self, parameter: str, force_full_register_read=False):
