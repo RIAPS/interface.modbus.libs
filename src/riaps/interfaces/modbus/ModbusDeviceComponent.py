@@ -47,7 +47,9 @@ class ModbusDeviceComponent(Component):
         self.logger.info("handleActivate complete")
 
     def send_modbus(self, msg):
-        self.logger.info(f"{tc.Cyan}send_modbus: {msg}{tc.RESET}")
+        self.logger.info(f"{tc.Cyan}"
+                         f"ModbusDeviceComponent | send_modbus | send riaps msg to modbus: {msg}"
+                         f"{tc.RESET}")
 
         recipient = msg["to_device"]
         device_thread = self.device_threads[recipient]
