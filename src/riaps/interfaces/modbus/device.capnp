@@ -11,7 +11,7 @@ struct DeviceEvent {
     values @3: List(Float64);
     units @4: List(Text) = ["None"];
     device @5: Text = "";
-    returnStatus @6: List(Text) = [];
+    error @6: Int16 = 0;
     et    @7: Float32 = 0.0;
 }
 # riaps:keep_deviceevent:end
@@ -25,7 +25,7 @@ struct DeviceAns {
     values @4: List(Float64)=[0.0];
     states @5: List(Bool)=[false];
     units @6: List(Text);
-    error @7: Int16 = 0;
+    returnStatus @6: List(Text) = [];
     et    @8: Float32 = 0.0;
     msgcounter @9: Int64;
 }
