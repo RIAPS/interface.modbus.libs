@@ -146,8 +146,14 @@ class ModbusInterface:
         results = {"device_name": self.device_name,
                    "command": command_name,
                    "values": values,
-                   "units": units,
-                   "errors": errors}
+                   "units": units}
+
+        # If there are errors, add them to the result.
+        # The ModbusMasterThread will check if there are errors, and if there are not then it will send a return
+        # status of OK
+        if errors:
+            results["errors"] = errors
+
         return results
 
     def read_modbus(self, parameter: str, force_full_register_read=False):
