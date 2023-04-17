@@ -65,6 +65,7 @@ class ModbusMaster(threading.Thread):
                     modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
                                                                        values=value)
                     modbus_response_values["values"].append(modbus_result["values"])
+                    modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
                     self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
                 else:
                     # TODO: test this code.
@@ -76,9 +77,10 @@ class ModbusMaster(threading.Thread):
                                      "operation": f"{operation}",
                                      "values": None,
                                      "units": None,
-                                     "return_status": f"{parameter}_{operation} is not defined"
+                                     "errors": f"{parameter}_{operation} is not defined"
                                      }
                     modbus_response_values["values"].append(modbus_result["values"])
+                    modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
 
             self.command_port_plug.send_pyobj(modbus_response_values)
 
