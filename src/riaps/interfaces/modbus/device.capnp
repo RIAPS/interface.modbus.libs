@@ -22,7 +22,7 @@ struct DeviceAns {
     reply @1: Text= "";
     operation @3: Text = "";
     params @2: List(Text);
-    values @4: List(Float64)=[0.0];
+    values @4: List(List(Float64))=[[0.0]];
     states @5: List(Bool)=[false];
     units @6: List(Text);
     returnStatus @7: List(Text) = [];
