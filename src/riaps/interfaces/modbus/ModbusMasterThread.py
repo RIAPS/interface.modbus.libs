@@ -46,18 +46,20 @@ class ModbusMaster(threading.Thread):
             self.logger.info(f"ModbusMasterThread | run | receive message on command port: {msg}")
 
             # read message and read modbus
-            # TODO: Probably need to loop over parameters and values.
             operation = msg["operation"]
             parameters = msg["parameters"]
             values = msg["values"]
             modbus_response_values = {"device_name": msg["to_device"],
                                       "operation": operation,
                                       "parameters": parameters,
-                                      "values": []}
+                                      "values": [],
+                                      "return_status": [],
+                                      "msgcounter": msg["msgcounter"]}
             for (parameter, value) in zip(parameters, values):
                 if operation == "READ":
                     modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
                     modbus_response_values["values"].append(modbus_result["values"])
+                    modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
                     self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
                 elif operation == "WRITE":
                     modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
