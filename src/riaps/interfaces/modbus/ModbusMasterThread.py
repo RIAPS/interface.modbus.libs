@@ -58,12 +58,16 @@ class ModbusMaster(threading.Thread):
             for (parameter, value) in zip(parameters, values):
                 if operation == "READ":
                     modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
+                    if not modbus_result:
+                        self.logger.warning(f"ModbusMasterThread | run | READ | modbus is unresponsive")
                     modbus_response_values["values"].append(modbus_result["values"])
                     modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
                     self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
                 elif operation == "WRITE":
                     modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
                                                                        values=value)
+                    if not modbus_result:
+                        self.logger.warning(f"ModbusMasterThread | run | WRITE | modbus is unresponsive")
                     modbus_response_values["values"].append(modbus_result["values"])
                     modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
                     self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
