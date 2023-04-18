@@ -55,7 +55,7 @@ class ModbusInterface:
         elif protocol in ["Serial", "RS232"]:
             master = self.setup_rtu_master(comm_config)
         else:
-            self.logger.error(f"{protocol} protocol not implemented")
+            self.logger.error(f"ModbusInterface | setup_master | {protocol} protocol not implemented")
             return None
         master.set_verbose(ModbusSystem.Debugging.Verbose)
         return master
@@ -93,11 +93,11 @@ class ModbusInterface:
                                                 output_value=value_to_write,
                                                 data_format=data_fmt)
         except ConnectionRefusedError as ex:
-            self.logger.error(f"error={ex})")
+            self.logger.error(f"ModbusInterface | execute_modbus_command | error={ex})")
             return
         # TODO: catching socket.timeout doesn't work.
         except Exception as ex:
-            self.logger.error(f"error={ex})")
+            self.logger.error(f"ModbusInterface | execute_modbus_command | error={ex})")
             return
         # except socket.timeout as e_info:
         #     self.logger.error(f"error={e_info})")
@@ -120,6 +120,7 @@ class ModbusInterface:
                                          f"{tc.RESET}")
                     except TypeError as ex:
                         self.logger.warning(f"{tc.Red}"
+                                            f"ModbusInterface | execute_modbus_command |"
                                             f"Spdlog had trouble: {ex}"
                                             f"{tc.RESET}")
             return list(result)
@@ -186,11 +187,11 @@ class ModbusInterface:
         if bit_position:
             # Get Current registry values:
             current_registry_value = self.read_modbus(parameter, force_full_register_read=True)["values"]
-            self.logger.debug(f"Read current_registry_value before write: {current_registry_value}")
+            self.logger.debug(f"ModbusInterface | write_modbus | Read current_registry_value before write: {current_registry_value}")
 
             bit_value = values[0]
             value = set_bit(current_registry_value[0], bit_position, bit_value)
-            self.logger.debug(f"value after setting bit: {value}")
+            self.logger.debug(f"ModbusInterface | write_modbus | value after setting bit: {value}")
             values_to_write.append(value)
         elif scale_factor:
             for value in values:
@@ -212,19 +213,23 @@ class ModbusInterface:
 
         response: list = self.execute_modbus_command(command_name, value_to_write=values_to_write)
         #  https://ozeki.hu/p_5883-mobdbus-function-code-16-write-multiple-holding-registers.html
-        self.logger.info(f"Response to writing value: {response}")
+        self.logger.info(f"ModbusInterface | write_modbus | Response to writing value: {response}")
 
         # In response to a successful WRITE command the modbus returns
         # 1: The starting address of the parameters
         # 2: The number of registers written.
         if len(response) != 2:
-            self.logger.info(f"{tc.Red}If this happens update code."
+            self.logger.info(f"{tc.Red}"
+                             f"ModbusInterface | write_modbus | "
+                             f"If this happens update code."
                              f"Response wrong length: {response}"
                              f"{tc.RESET}")
             results = {"command": command_name, "values": [], "units": units}
             return results
         if response[0] != starting_address or response[1] != register_length:
-            self.logger.info(f"{tc.Red}If this happens update code."
+            self.logger.info(f"{tc.Red}"
+                             f"ModbusInterface | write_modbus | "
+                             f"If this happens update code."
                              f"Parameter mismatch: {response}"
                              f"{tc.RESET}")
             results = {"command": command_name, "values": [], "units": units}
