@@ -187,7 +187,8 @@ class ModbusInterface:
         if bit_position:
             # Get Current registry values:
             current_registry_value = self.read_modbus(parameter, force_full_register_read=True)["values"]
-            self.logger.debug(f"ModbusInterface | write_modbus | Read current_registry_value before write: {current_registry_value}")
+            self.logger.debug(
+                f"ModbusInterface | write_modbus | Read current_registry_value before write: {current_registry_value}")
 
             bit_value = values[0]
             value = set_bit(current_registry_value[0], bit_position, bit_value)
@@ -218,22 +219,32 @@ class ModbusInterface:
         # In response to a successful WRITE command the modbus returns
         # 1: The starting address of the parameters
         # 2: The number of registers written.
+        if not response:
+            self.logger.warning(f"{tc.Red}"
+                                f"ModbusInterface | write_modbus | "
+                                f"No modbus response"
+                                f"{tc.RESET}")
+            error = f"No modbus response"
+            result = {"command": command_name, "values": [], "units": units, "errors": error}
+            return result
         if len(response) != 2:
-            self.logger.info(f"{tc.Red}"
-                             f"ModbusInterface | write_modbus | "
-                             f"If this happens update code."
-                             f"Response wrong length: {response}"
-                             f"{tc.RESET}")
-            results = {"command": command_name, "values": [], "units": units}
-            return results
+            self.logger.warning(f"{tc.Red}"
+                                f"ModbusInterface | write_modbus | "
+                                f"If this happens update code."
+                                f"Response wrong length: {response}"
+                                f"{tc.RESET}")
+            error = f"Response wrong length"
+            result = {"command": command_name, "values": [], "units": units, "errors": error}
+            return result
         if response[0] != starting_address or response[1] != register_length:
-            self.logger.info(f"{tc.Red}"
-                             f"ModbusInterface | write_modbus | "
-                             f"If this happens update code."
-                             f"Parameter mismatch: {response}"
-                             f"{tc.RESET}")
-            results = {"command": command_name, "values": [], "units": units}
-            return results
+            self.logger.warning(f"{tc.Red}"
+                                f"ModbusInterface | write_modbus | "
+                                f"If this happens update code."
+                                f"Parameter mismatch: {response}"
+                                f"{tc.RESET}")
+            error = f"Modbus Parameter mismatch"
+            result = {"command": command_name, "values": [], "units": units, "errors": error}
+            return result
 
         # Since a WRITE command does not return the written value, we insert the written value
         # manually into the response, and as a result we do not need to scale it.
