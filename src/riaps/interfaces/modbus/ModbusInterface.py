@@ -119,10 +119,10 @@ class ModbusInterface:
                                          f"{string}"
                                          f"{tc.RESET}")
                     except TypeError as ex:
-                        self.logger.warning(f"{tc.Red}"
-                                            f"ModbusInterface | execute_modbus_command |"
-                                            f"Spdlog had trouble: {ex}"
-                                            f"{tc.RESET}")
+                        self.logger.warn(f"{tc.Red}"
+                                         f"ModbusInterface | execute_modbus_command |"
+                                         f"Spdlog had trouble: {ex}"
+                                         f"{tc.RESET}")
             return list(result)
 
     def scale_response(self, response, command_name: str, force_full_register_read=False):
@@ -220,28 +220,28 @@ class ModbusInterface:
         # 1: The starting address of the parameters
         # 2: The number of registers written.
         if not response:
-            self.logger.warning(f"{tc.Red}"
-                                f"ModbusInterface | write_modbus | "
-                                f"No modbus response"
-                                f"{tc.RESET}")
+            self.logger.warn(f"{tc.Red}"
+                             f"ModbusInterface | write_modbus | "
+                             f"No modbus response"
+                             f"{tc.RESET}")
             error = f"No modbus response"
             result = {"command": command_name, "values": [], "units": units, "errors": error}
             return result
         if len(response) != 2:
-            self.logger.warning(f"{tc.Red}"
-                                f"ModbusInterface | write_modbus | "
-                                f"If this happens update code."
-                                f"Response wrong length: {response}"
-                                f"{tc.RESET}")
+            self.logger.warn(f"{tc.Red}"
+                             f"ModbusInterface | write_modbus | "
+                             f"If this happens update code."
+                             f"Response wrong length: {response}"
+                             f"{tc.RESET}")
             error = f"Response wrong length"
             result = {"command": command_name, "values": [], "units": units, "errors": error}
             return result
         if response[0] != starting_address or response[1] != register_length:
-            self.logger.warning(f"{tc.Red}"
-                                f"ModbusInterface | write_modbus | "
-                                f"If this happens update code."
-                                f"Parameter mismatch: {response}"
-                                f"{tc.RESET}")
+            self.logger.warn(f"{tc.Red}"
+                             f"ModbusInterface | write_modbus | "
+                             f"If this happens update code."
+                             f"Parameter mismatch: {response}"
+                             f"{tc.RESET}")
             error = f"Modbus Parameter mismatch"
             result = {"command": command_name, "values": [], "units": units, "errors": error}
             return result
