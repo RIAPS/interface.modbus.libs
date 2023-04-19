@@ -15,7 +15,7 @@ struct DeviceEvent {
     et    @7: Float32 = 0.0;
 }
 # riaps:keep_deviceevent:end
-git
+
 # riaps:keep_deviceans:begin
 struct DeviceAns {
     device @0: Text = "";
