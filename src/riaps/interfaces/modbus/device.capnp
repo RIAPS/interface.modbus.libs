@@ -15,7 +15,7 @@ struct DeviceEvent {
     et    @7: Float32 = 0.0;
 }
 # riaps:keep_deviceevent:end
-
+git
 # riaps:keep_deviceans:begin
 struct DeviceAns {
     device @0: Text = "";
@@ -36,7 +36,7 @@ struct DeviceQry {
     device @0: Text = "";
     operation @1: Text = "";
     params @2: List(Text);
-    values @3: List(List(Int64))=[[0]];
+    values @3: List(List(Float64))=[[0.0]];
     timestamp @4: Float64;
     msgcounter @5: Int64;
 }
