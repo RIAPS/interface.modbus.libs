@@ -48,14 +48,15 @@ class ModbusMaster(threading.Thread):
             # read message and read modbus
             operation = msg["operation"]
             parameters = msg["parameters"]
-            values = msg["values"]
+            param_values = msg["values"]
             modbus_response_values = {"device_name": msg["to_device"],
                                       "operation": operation,
                                       "parameters": parameters,
                                       "values": [],
                                       "return_status": [],
                                       "msgcounter": msg["msgcounter"]}
-            for (parameter, value) in zip(parameters, values):
+            for (parameter, values) in zip(parameters, param_values):
+
                 if operation == "READ":
                     modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
                     if not modbus_result:
@@ -64,8 +65,9 @@ class ModbusMaster(threading.Thread):
                     modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
                     self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
                 elif operation == "WRITE":
+                    # TODO: FIX THIS. EITHER SEND LIST OF LISTS OR PUT IN LIST
                     modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
-                                                                       values=value)
+                                                                       values=values)
                     if not modbus_result:
                         self.logger.warn(f"ModbusMasterThread | run | WRITE | modbus is unresponsive")
                     modbus_response_values["values"].append(modbus_result["values"])

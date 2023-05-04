@@ -95,10 +95,11 @@ class ModbusInterface:
         except ConnectionRefusedError as ex:
             self.logger.error(f"ModbusInterface | execute_modbus_command | error={ex})")
             return
-        # TODO: catching socket.timeout doesn't work.
+
         except Exception as ex:
             self.logger.error(f"ModbusInterface | execute_modbus_command | error={ex})")
             return
+        # TODO: catching socket.timeout doesn't work.
         # except socket.timeout as e_info:
         #     self.logger.error(f"error={e_info})")
         #     return True
@@ -106,11 +107,11 @@ class ModbusInterface:
             if self.debug_mode:
                 # Uncomment strings below if desired.
                 strings = [
-                    # f"ModbusInterface | execute_modbus_command",
+                    f"ModbusInterface | execute_modbus_command",
                     # f"device_name: {self.device_name}",
                     # f"parameter: {command_name}",
                     # f"starting_address: {starting_address}",
-                    # f"response: {result}",
+                    f"response: {result}",
                     # f"timestamp: {dt.datetime.now()}"
                 ]
                 for string in strings:
@@ -133,14 +134,23 @@ class ModbusInterface:
         units = self.device_config[command_name].get("units")
         values = []
         errors = []  # TODO: add errors as they come up
+
         for value in response:
             if scale_factor:
                 values.append(value * scale_factor)
             elif force_full_register_read:
                 values.append(value)
-            elif bit_position:
+            elif bit_position is not None:
                 bit_value = get_bit(value, bit_position=bit_position)
                 values.append(bit_value)
+                self.logger.info(f"{tc.Red}"
+                                 f"{command_name}\n"
+                                 f"response: {response}\n"
+                                 f"scale_factor: {scale_factor}\n"
+                                 f"force_full_register_read: {force_full_register_read}\n"
+                                 f"bit_position: {bit_position}\n"
+                                 f"bit_value: {bit_value}"
+                                 f"{tc.RESET}")
             else:
                 values.append(value)
 
