@@ -109,7 +109,7 @@ class ModbusInterface:
                 strings = [
                     f"ModbusInterface | execute_modbus_command",
                     # f"device_name: {self.device_name}",
-                    # f"parameter: {command_name}",
+                    f"parameter: {command_name}",
                     # f"starting_address: {starting_address}",
                     f"response: {result}",
                     # f"timestamp: {dt.datetime.now()}"
