@@ -1,16 +1,17 @@
-COILS:
-  block_type: 1
-  starting_address: 0
-  num_registers: 10000
-DISCRETE_INPUTS:
-  block_type: 2
-  starting_address: 0
-  num_registers: 10000
-HOLDING_REGISTERS:
-  block_type: 3
-  starting_address: 0
-  num_registers: 10000
-ANALOG_INPUTS:
-  block_type: 4
-  starting_address: 0
-  num_registers: 10000
+REGISTERS:
+  COILS:
+    block_type: 1
+    starting_address: 0
+    num_registers: 10000
+  DISCRETE_INPUTS:
+    block_type: 2
+    starting_address: 0
+    num_registers: 10000
+  HOLDING_REGISTERS:
+    block_type: 3
+    starting_address: 0
+    num_registers: 10000
+  ANALOG_INPUTS:
+    block_type: 4
+    starting_address: 0
+    num_registers: 10000

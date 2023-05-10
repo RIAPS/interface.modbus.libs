@@ -23,10 +23,11 @@ verbose = True
 def load_config(config_path, config_type):
     with open(config_path) as f:
         config = yaml.safe_load(f)
-    for item in config:
+    register_config = config["REGISTERS"]
+    for item in register_config:
         for parameter in required_parameters[config_type]:
-            if config[item].get(parameter) is None:
-                print(f"Parameter {parameter} not defined in {item}:{config[item]}")
+            if register_config[item].get(parameter) is None:
+                print(f"Parameter {parameter} not defined in {item}:{register_config[item]}")
                 return
     return config
 
@@ -41,7 +42,7 @@ def main(port, address, modbus_config_file_path, device_config_file_path):
     """
     Cyan = "\033[96m"
     Yellow = "\033[93m"
-    modbus_block_config = load_config(modbus_config_file_path, "modbus_block")
+    modbus_block_config = load_config(modbus_config_file_path, "modbus_block")["REGISTERS"]
     if not modbus_block_config:
         return
 
@@ -50,7 +51,7 @@ def main(port, address, modbus_config_file_path, device_config_file_path):
         return
 
     server = modbus_tcp.TcpServer(port, address)
-    slave1 = server.add_slave(slave_id=1)  # TODO: add new config file for this
+    slave1 = server.add_slave(slave_id=device_conifg["SlaveID"])  # TODO: add new config file for this
 
     for block_type_name in modbus_block_config:
         block_type_config = modbus_block_config[block_type_name]
@@ -74,8 +75,9 @@ def main(port, address, modbus_config_file_path, device_config_file_path):
               f'{"Raw data":<10}'
               f'{tc.RESET}')
 
-    for parameter_name in device_conifg:
-        parameter = device_conifg[parameter_name]
+    device_register_config = device_conifg["REGISTERS"]
+    for parameter_name in device_register_config:
+        parameter = device_register_config[parameter_name]
         byte_order = parameter.get("byte_order")
         struct_byte_order = ">" if byte_order == "BE" else "<"
         initial_values = list(map(lambda x: x*parameter.get("scale_factor", 1), parameter.get("initial_values")))

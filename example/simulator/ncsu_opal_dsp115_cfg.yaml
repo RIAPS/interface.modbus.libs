@@ -1,0 +1,30 @@
+---
+SlaveID: 10
+REGISTERS:
+   FREQ:
+      register_name: input_reg_freq
+      block_name: ANALOG_INPUTS
+      starting_address: 22
+      initial_values: [60]
+      byte_order: "BE"  # > big-endian; < little-endian
+      data_type: h
+      num_registers: 1
+      scale_factor: 100
+      units: Hz
+   VA_RMS:
+      register_name: input_reg_va_rms
+      block_name: ANALOG_INPUTS
+      starting_address: 9
+      initial_values: [480]
+      byte_order: "BE"
+      data_type: h
+      num_registers: 1
+      scale_factor: 1
+      units: V
+
+      
+      
+      
+      
+      
+         

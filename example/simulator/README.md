@@ -30,3 +30,22 @@ The top level parameter name (e.g., `Parm1`) can be set as desired for readabili
 * `num_registers` is the number of 16 bit registers required to hold the values. E.g., a 32 bit float would use `f` and require 2 16 bit registers. While a 64 bit float would use `d` and require 4 16 bit registers. The "standard size" in the python struct library is the number of bytes (8bits) used by each data type.  
 * `scale_factor` scales the input values if required to be compatible with the specified data type.
 * `Units` is for readability and convenience. It is not used in the code.
+
+# Additional Examples
+From the `example/simulator` directory:
+
+Terminal 1:
+```bash
+sudo python3 tcpslave_sim.py --dcfg ncsu_opal_dsp115_cfg.yaml
+```
+
+Terminal 2:
+```bash
+sudo python3 tcpslave_sim.py --dcfg ncsu_opal_dsp116_cfg.yaml
+```
+
+From the `example/simulator/reader` directory:
+Terminal 3:
+```bash
+python3 read_sim.py
+```
