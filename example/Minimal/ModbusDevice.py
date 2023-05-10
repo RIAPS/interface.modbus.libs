@@ -17,7 +17,8 @@ class ModbusDevice(ModbusDeviceComponent):
             msg = {"to_device": "Test_NEC-BESS1",
                    "parameters": ["GeneratorStatus"],
                    "operation": "WRITE",
-                   "values": [self.values_to_write[self.counter]]}
+                   "values": [self.values_to_write[self.counter]],
+                   "msgcounter": self.counter}
         if msg:
             self.counter += 1
             self.send_modbus(msg)
