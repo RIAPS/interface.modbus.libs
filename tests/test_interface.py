@@ -1,17 +1,38 @@
+import logging
 import multiprocessing
+import pytest
 import random
 import time
 
-import pytest
 
 import riaps.interfaces.modbus.ModbusInterface as ModbusInterface
 import example.simulator.tcpslave_sim as tcpslave_sim
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 
 @pytest.fixture(scope="session")
 def modbus_interface():
     path_to_file = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/Minimal/cfg/Test_NEC-BESS1.yaml"
     return ModbusInterface.ModbusInterface(path_to_file)
+
+
+@pytest.fixture(scope="session")
+def opal_modbus_gen_interface():
+    path_to_file = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/Minimal/cfg/GEN1-Banshee.yaml"
+    return ModbusInterface.ModbusInterface(path_to_file)
+
+
+@pytest.fixture(scope="session")
+def opal_modbus_relay_interface():
+    path_to_file = "/home/riaps/projects/RIAPS/interface.modbus.libs/example/Minimal/cfg/F1PCC.yaml"
+    return ModbusInterface.ModbusInterface(path_to_file, logger=logger)
 
 
 @pytest.fixture(scope="session")
@@ -50,7 +71,7 @@ def test_create_slave(tcp_slave):
 
 def test_write_read(modbus_interface, tcp_slave):
     # value = [random.uniform(0, 100)]
-    value = [11.315823554992676]
+    value = [11.0]
     result = modbus_interface.write_modbus(parameter="ReferenceInput",
                                            values=value)
     result = modbus_interface.read_modbus(parameter="ReferenceInput")
@@ -59,7 +80,7 @@ def test_write_read(modbus_interface, tcp_slave):
     tcp_slave.stop()
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 def test_slave_failure2(modbus_interface, tcp_slave):
     """
     This test highligts  a problem with the modbus_tk implementation.
@@ -72,3 +93,57 @@ def test_slave_failure2(modbus_interface, tcp_slave):
     with pytest.raises(socket.timeout) as e_info:
         result = modbus_interface.read_modbus(parameter="ReferenceInput")
         print(e_info)
+
+
+def test_opal_read(opal_modbus_gen_interface):
+    # values = [1]
+    # result = opal_modbus_gen_interface.write_modbus(parameter="CONTROL",
+    #                                                 values=values)
+    # print(f"CONTROL write output: {result['values']}")
+    #
+    # time.sleep(5)
+
+    # READ
+    parameters_to_poll = ["FREQ", "VA_RMS", "P", "Q", "VREF", "WREF"]
+    for parameter in parameters_to_poll:
+        print(f"poll parameter: {parameter}")
+        modbus_result = opal_modbus_gen_interface.read_modbus(parameter=parameter)
+        print(f"{parameter} output: {modbus_result['values']}")
+
+
+def test_opal_bit_read(opal_modbus_relay_interface):
+    # WRITE
+    values = [2]  # Close relay
+    result = opal_modbus_relay_interface.write_modbus(parameter="LOGIC",
+                                                      values=values)
+
+    time.sleep(5)
+    # READ
+    status = opal_modbus_relay_interface.read_modbus(parameter="STATUS")
+    connected = opal_modbus_relay_interface.read_modbus(parameter="IS_GRID_CONNECTED_BIT")
+    tripped = opal_modbus_relay_interface.read_modbus(parameter="IS_TRIPPED_BIT")
+    fault = opal_modbus_relay_interface.read_modbus(parameter="HAVE_INTERNAL_FAULT_BIT")
+
+    print(status)
+    print(connected)
+    print(tripped)
+    print(fault)
+
+    # WRITE
+    values = [1]  # Open relay
+    result = opal_modbus_relay_interface.write_modbus(parameter="LOGIC",
+                                                      values=values)
+    time.sleep(5)
+    # READ
+    status = opal_modbus_relay_interface.read_modbus(parameter="STATUS")
+    connected = opal_modbus_relay_interface.read_modbus(parameter="IS_GRID_CONNECTED_BIT")
+    tripped = opal_modbus_relay_interface.read_modbus(parameter="IS_TRIPPED_BIT")
+    fault = opal_modbus_relay_interface.read_modbus(parameter="HAVE_INTERNAL_FAULT_BIT")
+    print(status)
+    print(connected)
+    print(tripped)
+    print(fault)
+
+    # CHECK
+    # print(f"input: {values} output: {result['values']}")
+    # assert result['values'] == values
