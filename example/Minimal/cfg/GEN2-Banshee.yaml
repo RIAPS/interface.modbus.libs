@@ -1,5 +1,4 @@
 
----
 # DG1, READ, CMD
 # DG1, WRITE, CMD=Value
 Name: GEN2-Banshee
@@ -23,7 +22,6 @@ MAX_GROUP_PUBLISH_DELAY_SECONDS: 1.0
 
 # FSM
 initial_state: SHUTDOWN
-testlog: GEN202
 vote_timeout: 10000.0  # Float in ms
 msg_timeouts:
   delay:
@@ -173,7 +171,7 @@ VA_RMS_READ:
    #Info: Phase A RMS voltage
 
 VB_RMS_READ:
-   info: Description of parameter or command
+   info: Phase B RMS voltage
    function: READ_INPUT_REGISTERS
    start: 10
    length: 1
@@ -181,10 +179,9 @@ VB_RMS_READ:
    expected_length: -1
    scale_factor: 1
    units: V
-   #Info: Phase B RMS voltage
 
 VC_RMS_READ:
-   info: Description of parameter or command
+   info: Phase C RMS voltage
    function: READ_INPUT_REGISTERS
    start: 11
    length: 1
@@ -192,7 +189,6 @@ VC_RMS_READ:
    expected_length: -1
    scale_factor: 1
    units: V
-   #Info: Phase C RMS voltage
 
 VA_PEAK_READ:
    info: Description of parameter or command
@@ -366,7 +362,7 @@ VREF_READ:
    length: 1
    data_format: ""
    expected_length: -1
-   scale_factor: 0.001
+   scale_factor: .001
    units: NONE
 
 WREF_READ:
@@ -376,7 +372,7 @@ WREF_READ:
   length: 1
   data_format: ""
   expected_length: -1
-  scale_factor: 0.001
+  scale_factor: .001
   units: NONE
 
 ###### READ/WRITE Commands - Holding registers #######

@@ -401,11 +401,19 @@ IS_TRIPPED_BIT_READ:
   length: 1
   data_format: ""
   expected_length: -1
-  bit_position: 1
-  scale_factor: 1
-  units: NONE
+  bit_position: 0
   # TODO: Add units to other bit operations
   #Info: breaker is tripped
+
+HAVE_INTERNAL_FAULT_BIT_READ:
+  info: Description of parameter or command
+  function: READ_INPUT_REGISTERS
+  start: 27
+  length: 1
+  data_format: ""
+  expected_length: -1
+  bit_position: 1
+  #Info: ?
 
 IS_GRID_CONNECTED_BIT_READ:
   info: Description of parameter or command
@@ -415,17 +423,9 @@ IS_GRID_CONNECTED_BIT_READ:
   data_format: ""
   expected_length: -1
   bit_position: 2
-  #Info: relay is closed
+  #Info: If 0 then connected, 1 disconnected
 
-HAVE_INTERNAL_FAULT_BIT_READ:
-  info: Description of parameter or command
-  function: READ_INPUT_REGISTERS
-  start: 27
-  length: 1
-  data_format: ""
-  expected_length: -1
-  bit_position: 4
-  #Info: relay is tripped
+
 
 
 #####################BIT READ/WRITE COMMANDS##########################################
