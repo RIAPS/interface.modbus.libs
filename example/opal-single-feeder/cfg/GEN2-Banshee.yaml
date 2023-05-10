@@ -597,15 +597,25 @@ IS_GRID_CONNECTED_BIT_READ:
    bit_position: 2
    #Info: Generator is connected to the grid
 
-HAVE_INTERNAL_FAULT_BIT_READ:
+VREF_READ:
    info: Description of parameter or command
    function: READ_INPUT_REGISTERS
    start: 27
    length: 1
    data_format: ""
    expected_length: -1
-   bit_position: 4
-   #Info: Generator output breaker is tripped
+   scale_factor: 1
+   units: NONE
+
+WREF_READ:
+  info: Description of parameter or command
+  function: READ_INPUT_REGISTERS
+  start: 28
+  length: 1
+  data_format: ""
+  expected_length: -1
+  scale_factor: 1
+  units: NONE
 
 
 #####################BIT READ/WRITE COMMANDS##########################################
