@@ -10,3 +10,4 @@ riaps.key
 riaps.yaml
 riaps-app.cert
 ModbusApp.json
+MinimalModbusApp.json
