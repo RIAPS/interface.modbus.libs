@@ -55,24 +55,13 @@ class ModbusMaster(threading.Thread):
                                       "values": [],
                                       "return_status": [],
                                       "msgcounter": msg["msgcounter"]}
+            
             for (parameter, values) in zip(parameters, param_values):
-
                 if operation == "READ":
                     modbus_result = self.modbus_interface.read_modbus(parameter=parameter)
-                    if not modbus_result:
-                        self.logger.warn(f"ModbusMasterThread | run | READ | modbus is unresponsive")
-                    modbus_response_values["values"].append(modbus_result["values"])
-                    modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
-                    self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
                 elif operation == "WRITE":
                     # TODO: FIX THIS. EITHER SEND LIST OF LISTS OR PUT IN LIST
-                    modbus_result = self.modbus_interface.write_modbus(parameter=parameter,
-                                                                       values=values)
-                    if not modbus_result:
-                        self.logger.warn(f"ModbusMasterThread | run | WRITE | modbus is unresponsive")
-                    modbus_response_values["values"].append(modbus_result["values"])
-                    modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
-                    self.logger.info(f"ModbusMasterThread | run | operation: {operation} | result: {modbus_result}")
+                    modbus_result = self.modbus_interface.write_modbus(parameter=parameter, values=values)
                 else:
                     # TODO: test this code.
                     #  also consider updating the other instances of this data structure
@@ -85,8 +74,10 @@ class ModbusMaster(threading.Thread):
                                      "units": None,
                                      "errors": f"{parameter}_{operation} is not defined"
                                      }
-                    modbus_response_values["values"].append(modbus_result["values"])
-                    modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
+                if not modbus_result:
+                    self.logger.warn(f"ModbusMasterThread | run | {operation} | modbus is unresponsive")
+                modbus_response_values["values"].append(modbus_result["values"])
+                modbus_response_values["return_status"].append(modbus_result.get("errors", "OK"))
 
             self.command_port_plug.send_pyobj(modbus_response_values)
 
