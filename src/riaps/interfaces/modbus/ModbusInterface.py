@@ -116,9 +116,9 @@ class ModbusInterface:
                 ]
                 for string in strings:
                     try:
-                        self.logger.info(f"{tc.White}"
-                                         f"{string}"
-                                         f"{tc.RESET}")
+                        self.logger.debug(f"{tc.White}"
+                                          f"{string}"
+                                          f"{tc.RESET}")
                     except TypeError as ex:
                         self.logger.warn(f"{tc.Red}"
                                          f"ModbusInterface | execute_modbus_command |"
