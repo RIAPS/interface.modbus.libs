@@ -322,7 +322,7 @@ class ModbusInterface:
             f"ModbusInterface | write_modbus | Response to writing value: {response}"
         )
         if len(response) != 2:
-            self.logger.warn(
+            self.logger.warning(
                 f"{tc.Red}"
                 f"ModbusInterface | write_modbus | "
                 f"If this happens update code."
@@ -337,8 +337,8 @@ class ModbusInterface:
                 "errors": error,
             }
             return result
-        if response[0] != starting_address or response[1] != register_length:
-            self.logger.warn(
+        if response[0] != starting_address:
+            self.logger.warning(
                 f"{tc.Red}"
                 f"ModbusInterface | write_modbus | "
                 f"If this happens update code."
