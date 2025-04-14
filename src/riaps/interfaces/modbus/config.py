@@ -39,4 +39,37 @@ def validate_configuration(device_config):
     for parameter in required_parameters:
         if parameter not in device_config:
             return {"return_code": 1, "msg": f"Configuration missing for {parameter}"}
-        return {"return_code": 0, "msg": "Valid device configuration"}
+
+    valid_device = _validate_device_config(device_config)
+    if valid_device["return_code"] != 0:
+        return valid_device
+
+    return {"return_code": 0, "msg": "Valid configuration"}
+
+
+def _validate_device_config(device_config):
+    """
+    Validate the device configuration to ensure all required keys are present.
+    """
+    required_keys = {
+        "TCP": ["Address", "Port"],
+        "Serial": ["device", "baudrate", "bytesize", "parity", "stopbits"],
+    }
+
+    protocol = device_config.get("Protocol")
+    if protocol not in required_keys:
+        error_message = f"Unsupported protocol: {protocol}"
+        return {"return_code": 1, "msg": error_message}
+
+    missing_keys = [
+        key
+        for key in required_keys[protocol]
+        if key not in device_config.get(protocol, {})
+    ]
+    if missing_keys:
+        error_message = (
+            f"Missing keys in {protocol} configuration: {', '.join(missing_keys)}"
+        )
+        return {"return_code": 1, "msg": error_message}
+
+    return {"return_code": 0, "msg": "Valid device configuration"}

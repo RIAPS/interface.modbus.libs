@@ -34,7 +34,7 @@ def set_bit(value, bit_position, bit_value):
 
 
 class ModbusInterface:
-    def __init__(self, path_to_file, logger=None, debug_mode=False):
+    def __init__(self, path_to_file, logger=None, debug_mode=False, auto_start=True):
 
         local_logger = logging.getLogger(__name__)
         if logger:
@@ -66,34 +66,107 @@ class ModbusInterface:
             raise ConnectionRefusedError(msg)
 
         self.device_name = self.device_config["Name"]
-        self.master = self.setup_master(self.device_config)
         self.debug_mode = (
             debug_mode if debug_mode else self.device_config.get("debugMode", False)
         )
 
-    def check_connection(self):
-        try:
-            protcol = self.device_config["Protocol"]
-            if protcol == "TCP":
-                address = self.device_config["TCP"]["Address"]
+        if auto_start:
+            self.master = self.setup_master(self.device_config)
+        else:
+            self.master = None
+
+    def get_fault_description(self, fault_code):
+        """Get the fault description from the fault lookup table."""
+        fault_lookup = self.device_config["fault_lookup"]
+        if fault_code in fault_lookup.keys():
+            return fault_lookup[fault_code]["description"]
+        else:
+            return f"Unknown fault code: {fault_code}"
+
+    def get_fault_recovery(self, fault_code):
+        """Get the fault recovery from the fault lookup table."""
+        fault_lookup = self.device_config["fault_lookup"]
+        if fault_code not in fault_lookup.keys():
+            fault_code = "unknown_fault"
+        handler = fault_lookup[fault_code]["handler"]
+        max_retries = fault_lookup[fault_code]["max_retries"]
+        description = fault_lookup[fault_code]["description"]
+        return description, handler, max_retries
+
+    def is_online(self):
+        """
+        Check if the Modbus device is online.
+        Returns a dictionary with 'status' (True/False) and 'error' (None or error message).
+        """
+        if self.device_config["Protocol"] == "TCP":
+            try:
+                addr = self.device_config["TCP"]["Address"]
                 port = self.device_config["TCP"]["Port"]
-                socket.create_connection(
-                    (address, port),
-                    timeout=ModbusSystem.Timeouts.TCPComm / 1000.0,
+            except KeyError as e:
+                error_message = f"Missing key in TCP configuration: {e}"
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            try:
+                sock.connect((addr, port))
+                self.logger.info(f"Successfully connected to {addr}:{port}")
+                sock.close()
+                return {"status": True, "error": None}
+            except socket.timeout:
+                error_message = f"Connection to {addr}:{port} timed out."
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+            except ConnectionRefusedError as e:
+                error_message = f"Connection to {addr}:{port} refused: {e}"
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+            except Exception as e:
+                error_message = f"Unexpected error during TCP connection: {e}"
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+
+        elif self.device_config["Protocol"] in ["Serial", "RS232"]:
+            try:
+                comm_config = self.device_config["Serial"]
+                serial_connection = serial.Serial(
+                    port=comm_config["device"],
+                    baudrate=comm_config["baudrate"],
+                    bytesize=comm_config["bytesize"],
+                    parity=comm_config["parity"],
+                    stopbits=comm_config["stopbits"],
+                    timeout=1,  # Set a timeout for the connection
                 )
-            elif protcol in ["Serial", "RS232"]:
-                # Serial connection is handled by the modbus_rtu library.
-                pass
-            else:
-                raise ValueError(f"Unsupported protocol: {protcol}")
-        except (socket.timeout, ConnectionRefusedError) as e:
-            self.logger.error(
-                f"{tc.Red}"
-                f"ModbusInterface | check_connection | "
-                f"Connection error: {e}"
-                f"{tc.RESET}"
-            )
-            return False
+                if serial_connection.is_open:
+                    self.logger.info(
+                        f"Successfully opened serial port {comm_config['device']}"
+                    )
+                    serial_connection.close()
+                    return {"status": True, "error": None}
+                else:
+                    error_message = (
+                        f"Failed to open serial port {comm_config['device']}."
+                    )
+                    self.logger.error(error_message)
+                    return {"status": False, "error": error_message}
+            except serial.SerialException as e:
+                error_message = f"Serial connection error: {e}"
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+            except KeyError as e:
+                error_message = f"Missing key in serial configuration: {e}"
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+            except Exception as e:
+                error_message = f"Unexpected error during serial connection: {e}"
+                self.logger.error(error_message)
+                return {"status": False, "error": error_message}
+
+        else:
+            error_message = f"Unsupported protocol: {self.device_config['Protocol']}"
+            self.logger.error(error_message)
+            return {"status": False, "error": error_message}
 
     def setup_master(self, device_config):
         protocol = device_config["Protocol"]
@@ -154,7 +227,7 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
-            self.logger.error(f"ModbusInterface | execute_modbus_command | error={ex})")
+            self.logger.error(f"error={ex}")
             return result
 
         except Exception as ex:
@@ -162,7 +235,7 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
-            self.logger.error(f"ModbusInterface | execute_modbus_command | error={ex})")
+            self.logger.error(f"Exception: {ex}")
             return result
         # TODO: catching socket.timeout doesn't work.
         # except socket.timeout as e_info:
@@ -368,3 +441,13 @@ class ModbusInterface:
         if self.debug_mode:
             self.logger.info(f"Modbus result: {result}")
         return result
+
+    def close(self):
+        if self.master:
+            self.master.close()
+            self.master = None
+            self.logger.info(f"Closed Modbus connection for {self.device_name}.")
+        else:
+            self.logger.warning(
+                f"No Modbus connection to close for {self.device_name}."
+            )
