@@ -22,7 +22,6 @@ classifiers = [
 ]
 dependencies = [
     "modbus_tk",
-    "riaps-pycom"
 ]
 
 [project.optional-dependencies]

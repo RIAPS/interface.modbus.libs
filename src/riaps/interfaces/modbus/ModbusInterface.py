@@ -7,6 +7,7 @@ from modbus_tk import modbus_tcp
 from modbus_tk import exceptions as modbus_exceptions
 import modbus_tk.defines as cst
 import serial
+import socket
 import sys
 import yaml
 
@@ -42,12 +43,57 @@ class ModbusInterface:
             self.logger = local_logger
 
         self.device_config = load_config_file(path_to_file)
-        self.config_validation_receipt = validate_configuration(self.device_config)
+        config_valid = validate_configuration(self.device_config)
+        if config_valid["return_code"] != 0:
+            msg = f"ModbusInterface | __init__ | Configuration error: {config_valid['msg']}"
+            self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
+            raise ValueError(msg)
+
+        connected = self.check_connection()
+        if not connected:
+            protocol = self.device_config["Protocol"]
+            if protocol == "TCP":
+                address = self.device_config["TCP"]["Address"]
+                port = self.device_config["TCP"]["Port"]
+            elif protocol in ["Serial", "RS232"]:
+                address = self.device_config["Serial"]["device"]
+                port = self.device_config["Serial"]["baudrate"]
+            else:
+                address = None
+                port = None
+            msg = f"ModbusInterface | __init__ | Connection error: {protocol}:{address}:{port}"
+            self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
+            raise ConnectionRefusedError(msg)
+
         self.device_name = self.device_config["Name"]
         self.master = self.setup_master(self.device_config)
         self.debug_mode = (
             debug_mode if debug_mode else self.device_config.get("debugMode", False)
         )
+
+    def check_connection(self):
+        try:
+            protcol = self.device_config["Protocol"]
+            if protcol == "TCP":
+                address = self.device_config["TCP"]["Address"]
+                port = self.device_config["TCP"]["Port"]
+                socket.create_connection(
+                    (address, port),
+                    timeout=ModbusSystem.Timeouts.TCPComm / 1000.0,
+                )
+            elif protcol in ["Serial", "RS232"]:
+                # Serial connection is handled by the modbus_rtu library.
+                pass
+            else:
+                raise ValueError(f"Unsupported protocol: {protcol}")
+        except (socket.timeout, ConnectionRefusedError) as e:
+            self.logger.error(
+                f"{tc.Red}"
+                f"ModbusInterface | check_connection | "
+                f"Connection error: {e}"
+                f"{tc.RESET}"
+            )
+            return False
 
     def setup_master(self, device_config):
         protocol = device_config["Protocol"]

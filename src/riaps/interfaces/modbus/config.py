@@ -3,7 +3,7 @@ import yaml
 
 def load_config_paths(path_to_device_list):
 
-    with open(path_to_device_list, 'r') as file:
+    with open(path_to_device_list, "r") as file:
         device_list = yaml.safe_load(file)
 
     global_debug_mode = device_list.get("GlobalDebugMode")
@@ -16,7 +16,7 @@ def load_config_paths(path_to_device_list):
 
 
 def load_config_file(path_to_file):
-    with open(path_to_file, 'r') as file:  # Intentionally do not handle exception
+    with open(path_to_file, "r") as file:  # Intentionally do not handle exception
         device_config = yaml.safe_load(file)
     return device_config
 
@@ -30,12 +30,13 @@ def load_config_files(device_config_paths):
 
 
 def validate_configuration(device_config):
-    required_parameters = ["Name",
-                           "Protocol",
-                           device_config.get("Protocol", "MISSING"),
-                           "SlaveID"]
+    required_parameters = [
+        "Name",
+        "Protocol",
+        device_config.get("Protocol", "MISSING"),
+        "SlaveID",
+    ]
     for parameter in required_parameters:
         if parameter not in device_config:
             return {"return_code": 1, "msg": f"Configuration missing for {parameter}"}
         return {"return_code": 0, "msg": "Valid device configuration"}
-
