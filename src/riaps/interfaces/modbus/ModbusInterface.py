@@ -49,21 +49,7 @@ class ModbusInterface:
             self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
             raise ValueError(msg)
 
-        connected = self.check_connection()
-        if not connected:
-            protocol = self.device_config["Protocol"]
-            if protocol == "TCP":
-                address = self.device_config["TCP"]["Address"]
-                port = self.device_config["TCP"]["Port"]
-            elif protocol in ["Serial", "RS232"]:
-                address = self.device_config["Serial"]["device"]
-                port = self.device_config["Serial"]["baudrate"]
-            else:
-                address = None
-                port = None
-            msg = f"ModbusInterface | __init__ | Connection error: {protocol}:{address}:{port}"
-            self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
-            raise ConnectionRefusedError(msg)
+        self.is_online()
 
         self.device_name = self.device_config["Name"]
         self.debug_mode = (
