@@ -306,6 +306,7 @@ class ModbusInterface:
 
         command_name = f"{parameter}_READ"
         result: list = self.execute_modbus_command(command_name)
+        self.logger.debug(f"result: {result}")
         if result.get("errors"):
             return result
         result = self.scale_response(
