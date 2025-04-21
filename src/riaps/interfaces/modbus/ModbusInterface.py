@@ -203,6 +203,10 @@ class ModbusInterface:
         length = command_config["length"]
         data_fmt = command_config.get("data_format", "")
 
+        # temporary hack
+        if getattr(cst, function_code) == cst.WRITE_SINGLE_REGISTER:
+            value_to_write = value_to_write[0]
+
         try:
             response: tuple = self.master.execute(
                 self.device_config["SlaveID"],
