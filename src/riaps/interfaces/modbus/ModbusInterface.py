@@ -49,8 +49,13 @@ class ModbusInterface:
             self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
             raise ValueError(msg)
 
-        self.is_online()
-
+        connected = self.is_online()
+        self.logger.info(f"connected: {connected}")
+        if connected["status"] is False:
+            msg = f"{connected['error']}"
+            self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
+            raise ConnectionRefusedError(msg)
+        
         self.device_name = self.device_config["Name"]
         self.debug_mode = (
             debug_mode if debug_mode else self.device_config.get("debugMode", False)
