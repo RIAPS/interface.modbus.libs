@@ -387,7 +387,7 @@ class ModbusInterface:
             return result
 
         response = result["response"]
-        self.logger.info(
+        self.logger.debug(
             f"ModbusInterface | write_modbus | Response to writing value: {response}"
         )
         if len(response) != 2:
