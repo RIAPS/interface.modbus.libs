@@ -49,19 +49,18 @@ class ModbusInterface:
             self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
             raise ValueError(msg)
 
-        connected = self.is_online()
-        self.logger.info(f"connected: {connected}")
-        if connected["status"] is False:
-            msg = f"{connected['error']}"
+        self.connected = self.is_online()
+        self.logger.info(f"connected: {self.connected}")
+        if self.connected["status"] is False:
+            msg = f"{self.connected['error']}"
             self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
-            raise ConnectionRefusedError(msg)
 
         self.device_name = self.device_config["Name"]
         self.debug_mode = (
             debug_mode if debug_mode else self.device_config.get("debugMode", False)
         )
 
-        if auto_start:
+        if auto_start and self.connected["status"] is True:
             self.master = self.setup_master(self.device_config)
         else:
             self.master = None
@@ -222,7 +221,16 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
+            self.connected  = self.is_online()
             self.logger.error(f"error={ex}")
+            return result
+        except ConnectionResetError as ex:
+            result = {
+                "command": command_name,
+                "errors": ex,
+            }
+            self.connected  = self.is_online()
+            self.logger.error(f"ConnectionResetError error={ex}")
             return result
 
         except Exception as ex:
@@ -230,6 +238,7 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
+            self.connected  = self.is_online()
             self.logger.error(f"Exception: {ex}")
             return result
         # TODO: catching socket.timeout doesn't work.
