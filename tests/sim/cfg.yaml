@@ -1,0 +1,46 @@
+DEVICE:
+  SlaveID: 1
+  Protocol: TCP
+  TCP:
+    Address: 127.0.0.1
+    Port: 5020
+
+BLOCKS:
+  c0-100:
+    type: COILS
+    starting_address: 0
+    num_registers: 100
+  di0-100:
+    type: DISCRETE_INPUTS
+    starting_address: 0
+    num_registers: 100
+  hr0-10000:
+    type: HOLDING_REGISTERS
+    starting_address: 0
+    num_registers: 10000
+  ai0-100:
+    type: ANALOG_INPUTS
+    starting_address: 0
+    num_registers: 100
+
+REGISTERS:
+  CMD:
+    block_name: hr0-10000
+    starting_address: 8501
+    initial_value: 8
+    data_format: ">H"
+    scale_factor: 1
+  LFRD:
+    block_name: hr0-10000
+    starting_address: 8602
+    initial_value: 0
+    data_format: ">h"
+    scale_factor: 1
+  RFRD:
+    block_name: hr0-10000
+    starting_address: 8604
+    initial_value: 0
+    data_format: ">h"
+    scale_factor: 1
+
+

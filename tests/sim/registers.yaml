@@ -1,0 +1,60 @@
+# Device Information
+Name: ATV320
+
+# MODBUS
+Protocol: TCP
+TCP:
+   Address: 127.0.0.1
+   Port:
+      5020
+SlaveID: 1
+
+CMD_READ:
+  info: Drive Communication Command Register
+  function: READ_HOLDING_REGISTERS
+  start: 8501
+  length: 1
+  data_format: ""
+  expected_length: -1
+  scale_factor: 1
+  units: 
+
+CMD_WRITE:
+  info: Drive Communication Command Register
+  function: WRITE_SINGLE_REGISTER
+  start: 8501
+  length: 1
+  data_format: ""
+  expected_length: -1
+  scale_factor: 1
+  units: 
+
+LFRD_READ:
+  info: Speed setpoint
+  function: READ_HOLDING_REGISTERS
+  start: 8602
+  length: 1
+  data_format: ">h"
+  expected_length: -1
+  scale_factor: 1
+  units: rpm
+
+LFRD_WRITE:
+  info: Speed setpoint
+  function: WRITE_SINGLE_REGISTER
+  start: 8602
+  length: 1
+  data_format: ""
+  expected_length: -1
+  scale_factor: 1
+  units: rpm
+
+RFRD_READ:
+  info: Output velocity
+  function: READ_HOLDING_REGISTERS
+  start: 8604
+  length: 1
+  data_format: ">h"
+  expected_length: -1
+  scale_factor: 1
+  units: rpm
