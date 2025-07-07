@@ -49,10 +49,10 @@ class ModbusInterface:
             self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
             raise ValueError(msg)
 
-        self.connected = self.is_online()
-        self.logger.info(f"connected: {self.connected}")
-        if self.connected["status"] is False:
-            msg = f"{self.connected['error']}"
+        self.online = self.is_online()
+        self.logger.info(f"online: {self.online}")
+        if self.online["status"] is False:
+            msg = f"{self.online['error']}"
             self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
 
         self.device_name = self.device_config["Name"]
@@ -60,7 +60,7 @@ class ModbusInterface:
             debug_mode if debug_mode else self.device_config.get("debugMode", False)
         )
 
-        if auto_start and self.connected["status"] is True:
+        if auto_start and self.online["status"] is True:
             self.master = self.setup_master(self.device_config)
         else:
             self.master = None
@@ -82,6 +82,12 @@ class ModbusInterface:
         max_retries = fault_lookup[fault_code]["max_retries"]
         description = fault_lookup[fault_code]["description"]
         return description, handler, max_retries
+
+    def is_connected(self):
+        if self.master is not None:
+            return True
+        else:
+            return False
 
     def is_online(self):
         """
@@ -221,7 +227,7 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
-            self.connected  = self.is_online()
+            self.online = self.is_online()
             self.logger.error(f"error={ex}")
             return result
         except ConnectionResetError as ex:
@@ -229,7 +235,7 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
-            self.connected  = self.is_online()
+            self.online = self.is_online()
             self.logger.error(f"ConnectionResetError error={ex}")
             return result
 
@@ -238,7 +244,7 @@ class ModbusInterface:
                 "command": command_name,
                 "errors": ex,
             }
-            self.connected  = self.is_online()
+            self.online = self.is_online()
             self.logger.error(f"Exception: {ex}")
             return result
         # TODO: catching socket.timeout doesn't work.
