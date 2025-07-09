@@ -177,6 +177,7 @@ class ModbusInterface:
             )
             return None
         master.set_verbose(ModbusSystem.Debugging.Verbose)
+        self.master = master
         return master
 
     def setup_tcp_master(self, comm_config):
