@@ -50,10 +50,6 @@ class ModbusInterface:
             raise ValueError(msg)
 
         self.online = self.is_online()
-        self.logger.info(f"online: {self.online}")
-        if self.online["status"] is False:
-            msg = f"{self.online['error']}"
-            self.logger.error(f"{tc.Red}{msg}{tc.RESET}")
 
         self.device_name = self.device_config["Name"]
         self.debug_mode = (
@@ -84,10 +80,7 @@ class ModbusInterface:
         return description, handler, max_retries
 
     def is_connected(self):
-        if self.master is not None:
-            return True
-        else:
-            return False
+        return self.master._is_opened
 
     def is_online(self):
         """
