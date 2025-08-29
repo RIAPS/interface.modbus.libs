@@ -196,6 +196,14 @@ class ModbusInterface:
         return master
 
     def execute_modbus_command(self, command_name: str, value_to_write=0):
+
+        if not self.master:
+            result = {
+                "command": command_name,
+                "errors": "No Modbus master",
+            }
+            return result
+
         command_config = self.device_config[command_name]
         function_code = command_config["function"]
         starting_address = command_config["start"]
