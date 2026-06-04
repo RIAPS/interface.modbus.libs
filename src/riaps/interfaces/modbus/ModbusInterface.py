@@ -105,15 +105,15 @@ class ModbusInterface:
                 return {"status": True, "error": None}
             except socket.timeout:
                 error_message = f"Connection to {addr}:{port} timed out."
-                self.logger.error(error_message)
+                self.logger.debug(error_message)
                 return {"status": False, "error": error_message}
             except ConnectionRefusedError as e:
                 error_message = f"Connection to {addr}:{port} refused: {e}"
-                self.logger.error(error_message)
+                self.logger.debug(error_message)
                 return {"status": False, "error": error_message}
             except Exception as e:
                 error_message = f"Unexpected error during TCP connection: {e}"
-                self.logger.error(error_message)
+                self.logger.debug(error_message)
                 return {"status": False, "error": error_message}
 
         elif self.device_config["Protocol"] in ["Serial", "RS232"]:
