@@ -22,6 +22,13 @@ classifiers = [
 ]
 dependencies = [
     "modbus_tk",
+    # All three are imported by src/riaps/interfaces/modbus/ but were never
+    # declared, so this package only ever installed successfully next to
+    # something else that happened to pull them in. On a clean environment
+    # `import riaps.interfaces.modbus.ModbusInterface` raised ModuleNotFoundError.
+    "pyyaml",    # config.py, ModbusInterface.py, ModbusDeviceComponent.py, slave.py
+    "pyserial",  # ModbusInterface.py (RTU transport)
+    "pyzmq",     # ModbusMasterThread.py
 ]
 
 [project.optional-dependencies]
